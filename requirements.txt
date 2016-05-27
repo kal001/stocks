@@ -1,0 +1,6 @@
+googlefinance
+ystockquote
+python-dateutil
+# workalendar
+pytz
+requests
