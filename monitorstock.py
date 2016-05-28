@@ -18,6 +18,7 @@ LOWCOUNT = 4
 MINRETURN = 0.05
 
 #Constants
+CASH = 10000
 TAXONDIVIDENDS = 0.26
 COMISSION = 6.95* 1.04
 
@@ -55,6 +56,34 @@ for stock in c.execute("select stockid, lowcount, minreturn, lasttradedatetime, 
         if VERBOSE:
             print "New Day"
 
+        #get last days of quotes
+        quotes = get_historical_prices(row["symbolyahoo"], (datetradenow-datetime.timedelta(days=lowcount)).strftime("%Y-%m-%d"), (datetradenow-datetime.timedelta(days=1)).strftime("%Y-%m-%d"))
+        sortedquotes = sorted(quotes.items(), key=operator.itemgetter(0))
+
+        #check if number of days descending reached
+        quoteant = 0.0
+        countlow = 0
+        for day in sortedquotes:
+            #calculate day return
+            if quoteant <> 0:
+                dayreturn = (float(day[1]["Close"])-quoteant)/quoteant
+            else:
+                dayreturn = 0
+
+            #increase number of consecutive days lowering
+            if dayreturn<0.0:
+                countlow = countlow+1
+            else:
+                countlow = 0
+
+            quoteant = float(day[1]["Close"])
+
+        #Todo acknowledge that stock was bought
+        if countlow>=lowcount and nowquote<quoteant:
+            qty = int((CASH-COMISSION)/nowquote)
+            if VERBOSE:
+                print "Time to BUY %s Qty = %8.2f Price = %8.3f" % (row["symbolgoogle"], qty, nowquote)
+
         c2 = conn.cursor()
         c2.execute("UPDATE strategies SET lasttradedatetime = ? WHERE stockid = ?;",  (datetradenow, stock['stockid'])) #update last quote timestamp
         conn.commit()
@@ -63,4 +92,4 @@ for stock in c.execute("select stockid, lowcount, minreturn, lasttradedatetime, 
     #Todo acknowledge that stock was sold
     if qty>0 and nowquote>=(1+minreturn)*buyprice:
         if VERBOSE:
-            print "Time to sell %s Qty = %8.2f Price = %8.3f" % (row["symbolgoogle"], qty, nowquote)
+            print "Time to SELL %s Qty = %8.2f Price = %8.3f" % (row["symbolgoogle"], qty, nowquote)
