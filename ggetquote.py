@@ -1,20 +1,25 @@
+#Tracks stocks to sqlite database
+
 __author__ = 'fernandolourenco'
 
 from googlefinance import getQuotes
 import ystockquote
 
-import json
 import sqlite3
 
 import datetime
 import dateutil.parser
 import pytz
-#from workalendar.europe import Portugal
+
 import requests
 
 conn = sqlite3.connect('stockdata.sqlite')
 conn.row_factory = sqlite3.Row
 c = conn.cursor()
+
+daytoday = str(datetime.datetime.utcnow().weekday())
+datetoday = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+year = datetime.datetime.utcnow().year
 
 for row in c.execute("select * from stocks where tracked='True';"):
 
@@ -29,15 +34,11 @@ for row in c.execute("select * from stocks where tracked='True';"):
     exchange = c1.fetchone()
     opendays = exchange["workingdays"].split(",")
 
-    daytoday = str(datetime.datetime.utcnow().weekday())
-    datetoday = datetime.datetime.utcnow().strftime("%Y-%m-%d")
-
     if not(daytoday in opendays): #if stockmarket closed, pass
         print "Stock market %s in weekend for stock %s(%s)" % (exchange['shortnamegoogle'], row["symbolgoogle"],stockname)
         continue
 
     #see if today is a holliday in the stock exchange
-    year = datetime.datetime.utcnow().year
     country = exchange["countrycode"]
 
     isholliday = False
@@ -72,7 +73,7 @@ for row in c.execute("select * from stocks where tracked='True';"):
 
     #see if the stock exchange is opened now
 
-    now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current time in UTC with  timezone info
+    now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
     openhour = exchange["openhour"]
     closehour = exchange["closehour"]
 
@@ -90,8 +91,6 @@ for row in c.execute("select * from stocks where tracked='True';"):
         timestamp = None
     interval = row["interval"]
     type= row["type"].upper()
-
-    now = datetime.datetime.utcnow() # get current date and time in UTC
 
     if (timestamp is None) or (now> timestamp + datetime.timedelta(minutes=interval) ): #see if it is time to get a new quote
         if type == "CURRENCY":
