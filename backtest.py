@@ -9,18 +9,18 @@ import sqlite3
 VERBOSE = True
 
 #Strategy
-LOWCOUNT = 4
+LOWCOUNT = 5
 MINRETURN = 0.05
 
 #Constants
 TAXONDIVIDENDS = 0.26
-COMISSION = 6.95* 1.04
+COMISSION = 14.95* 1.04
 
 conn = sqlite3.connect('stockdata.sqlite')
 conn.row_factory = sqlite3.Row
 
 c = conn.cursor()
-c.execute("select symbolyahoo from stocks where type='stock' and symbolyahoo='GALP.LS';")
+c.execute("select symbolyahoo from stocks where type='stock' and symbolyahoo='QLIK';")
 stocks = c.fetchall()
 
 for STOCK in stocks:

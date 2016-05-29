@@ -1,5 +1,4 @@
 #Tracks stocks to sqlite database
-
 __author__ = 'fernandolourenco'
 
 from googlefinance import getQuotes
@@ -13,30 +12,64 @@ import pytz
 
 import requests
 
-conn = sqlite3.connect('stockdata.sqlite')
-conn.row_factory = sqlite3.Row
-c = conn.cursor()
+VERBOSE = False
 
-daytoday = str(datetime.datetime.utcnow().weekday())
-datetoday = datetime.datetime.utcnow().strftime("%Y-%m-%d")
-year = datetime.datetime.utcnow().year
+DATABASE = 'stockdata.sqlite'
 
-for row in c.execute("select * from stocks where tracked='True';"):
+def main():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
 
-    stockid = row["id"]
-    stockname = row["name"]
+    for row in c.execute("select * from stocks where tracked='True';"):
+
+        stockid = row["id"]
+        stockname = row["name"]
+
+        if not(checkifmarketopen(row["exchangeid"], row["symbolgoogle"], stockname,conn)):
+            continue
+
+        if not(row["lastquotestamp"] is None):
+            timestamp = dateutil.parser.parse(row["lastquotestamp"]) # get last quote timestamp and parse into time object
+        else:
+            timestamp = None
+        interval = row["interval"]
+        type= row["type"].upper()
+
+        now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+        if (timestamp is None) or (now> timestamp + datetime.timedelta(minutes=interval) ): #see if it is time to get a new quote
+            if type == "CURRENCY":
+                symbol = str(row["symbolyahoo"])
+                quote = ystockquote.get_price(symbol) #get quote
+            elif type == "STOCK":
+                symbol = str(row["symbolgoogle"])
+                quote = getQuotes(symbol)[0]["LastTradePrice"]  #get quote
+
+            newtimestamp=datetime.datetime.utcnow().isoformat()+'Z' # all dates saved in UTC iso format
+            c1 = conn.cursor()
+            c1.execute("UPDATE stocks SET lastquotestamp = ? WHERE ID = ?;",  (newtimestamp, stockid)) #update last quote timestamp
+            c1.execute("INSERT INTO quotes(stockid,timestamp,value) VALUES (?,?,?);", (stockid,newtimestamp,quote)) #create new quote
+            conn.commit()
+
+            if VERBOSE:
+                print "Got new stock quote for %s(%s) of %s @%s" % (symbol,stockname,quote,newtimestamp)
+
+def checkifmarketopen(exchangeid, stocksymbol, stockname, conn):
+    daytoday = str(datetime.datetime.utcnow().weekday())
+    datetoday = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+    year = datetime.datetime.utcnow().year
 
     #see if the stock exchange is opened today
-
-    exchangeid = int(row["exchangeid"])
+    exchangeid = int(exchangeid)
     c1 = conn.cursor()
     c1.execute("select * from exchanges where id=:id;", {"id":exchangeid})
     exchange = c1.fetchone()
     opendays = exchange["workingdays"].split(",")
 
     if not(daytoday in opendays): #if stockmarket closed, pass
-        print "Stock market %s in weekend for stock %s(%s)" % (exchange['shortnamegoogle'], row["symbolgoogle"],stockname)
-        continue
+        if VERBOSE:
+            print "Stock market %s in weekend for stock %s(%s)" % (exchange['shortnamegoogle'], stocksymbol,stockname)
+        return False
 
     #see if today is a holliday in the stock exchange
     country = exchange["countrycode"]
@@ -68,11 +101,11 @@ for row in c.execute("select * from stocks where tracked='True';"):
         isholliday = getholliday['holliday']
 
     if isholliday: #if today is holliday, pass
-        print "Stock market %s in holliday for stock %s(%s)" % (exchange['shortnamegoogle'], row["symbolgoogle"],stockname)
-        continue
+        if VERBOSE:
+            print "Stock market %s in holliday for stock %s(%s)" % (exchange['shortnamegoogle'], stocksymbol,stockname)
+        return False
 
     #see if the stock exchange is opened now
-
     now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
     openhour = exchange["openhour"]
     closehour = exchange["closehour"]
@@ -82,28 +115,11 @@ for row in c.execute("select * from stocks where tracked='True';"):
         closehour = dateutil.parser.parse(closehour)
 
         if (now<openhour) or (now>closehour): #if stockmarket closed, pass
-            print "Stock market %s closed for stock %s(%s)" % (exchange['shortnamegoogle'], row["symbolgoogle"],stockname)
-            continue
+            if VERBOSE:
+                print "Stock market %s closed for stock %s(%s)" % (exchange['shortnamegoogle'], stocksymbol,stockname)
+            return False
 
-    if not(row["lastquotestamp"] is None):
-        timestamp = dateutil.parser.parse(row["lastquotestamp"]) # get last quote timestamp and parse into time object
-    else:
-        timestamp = None
-    interval = row["interval"]
-    type= row["type"].upper()
+    return True
 
-    if (timestamp is None) or (now> timestamp + datetime.timedelta(minutes=interval) ): #see if it is time to get a new quote
-        if type == "CURRENCY":
-            symbol = str(row["symbolyahoo"])
-            quote = ystockquote.get_price(symbol) #get quote
-        elif type == "STOCK":
-            symbol = str(row["symbolgoogle"])
-            quote = getQuotes(symbol)[0]["LastTradePrice"]  #get quote
-
-        newtimestamp=datetime.datetime.utcnow().isoformat()+'Z' # all dates saved in UTC iso format
-        c1 = conn.cursor()
-        c1.execute("UPDATE stocks SET lastquotestamp = ? WHERE ID = ?;",  (newtimestamp, stockid)) #update last quote timestamp
-        c1.execute("INSERT INTO quotes(stockid,timestamp,value) VALUES (?,?,?);", (stockid,newtimestamp,quote)) #create new quote
-        conn.commit()
-
-        print "Got new stock quote for %s(%s) of %s @%s" % (symbol,stockname,quote,newtimestamp)
+if __name__ == "__main__":
+    main()

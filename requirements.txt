@@ -1,6 +1,7 @@
 googlefinance
 ystockquote
 python-dateutil
-# workalendar
 pytz
 requests
+python-telegram-bot
+telepot
