@@ -3,5 +3,4 @@ ystockquote
 python-dateutil
 pytz
 requests
-python-telegram-bot
 telepot

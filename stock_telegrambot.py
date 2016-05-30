@@ -103,7 +103,11 @@ def handle(msg):
 
         conn.close()
     elif commands[0] == '/STATUS':
-        pass
+        bot.sendMessage(uid, text=u"Ok. Running")
+    elif commands[0] == '/START':
+        bot.sendMessage(uid, text=u"Started. Time now\n%s" % datetime.datetime.now())
+    elif commands[0] == '/HELP':
+        bot.sendMessage(uid, text=u"Available commands for %s: /buy, /sell, /status" % os.path.basename(sys.argv[0]))
     else:
         bot.sendMessage(uid, text=u"Unknown command" )
 

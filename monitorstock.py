@@ -31,7 +31,11 @@ COMISSION = 6.95* 1.04
 VERBOSE = False
 global DATABASE
 
+global newdayalert
+
 def main():
+    global newdayalert
+
     # Read config file
     parser = SafeConfigParser()
 
@@ -55,7 +59,7 @@ def main():
 
     c = conn.cursor()
 
-    for stock in c.execute("select stockid, lowcount, minreturn, lasttradedatetime, qty, buyprice from strategies where active='True';"):
+    for stock in c.execute("select id, stockid, lowcount, minreturn, lasttradedatetime, qty, buyprice from strategies where active='True';"):
         c1 = conn.cursor()
         c1.execute("select symbolgoogle,symbolyahoo,exchangeid,name from stocks where id=:id;", {"id":stock['stockid']})
         row = c1.fetchone()
@@ -125,7 +129,7 @@ def main():
                     print "Time to BUY %s (%s) Qty = %8.2f Price = %8.3f" % (row['name'], symbol, qty, nowquotevalue)
 
             c2 = conn.cursor()
-            c2.execute("UPDATE strategies SET lasttradedatetime = ? WHERE stockid = ?;",  (datetradenow, stock['stockid'])) #update last quote timestamp
+            c2.execute("UPDATE strategies SET lasttradedatetime = ? WHERE id = ?;",  (datetradenow, stock['id'])) #update last quote timestamp
             conn.commit()
 
         #Todo acknowledge that stock was sold
