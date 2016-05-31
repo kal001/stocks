@@ -16,7 +16,6 @@ import pytz
 
 import ggetquote
 
-
 import telepot
 
 from ConfigParser import SafeConfigParser
