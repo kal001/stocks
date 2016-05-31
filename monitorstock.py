@@ -27,7 +27,7 @@ import os
 #Constants
 CASH = 10000
 TAXONDIVIDENDS = 0.26
-COMISSION = 6.9* 1.04
+COMISSION = 6.95* 1.04
 
 VERBOSE = False
 global DATABASE
