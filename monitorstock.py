@@ -86,12 +86,12 @@ def main():
 
         #Get current quote
         quote = getQuotes(symbol)[0]
-        datetradenow = dateutil.parser.parse(quote["LastTradeDateTime"])  #get last trade time
+        datetradenow = dateutil.parser.parse(quote["LastTradeDateTimeLong"])  #get current last trade time on market
         nowquotevalue = float(quote['LastTradePrice']) #get last quote
 
         newdayalert = False
 
-        if (lasttradedatetime is None) or datetradenow.day>lasttradedatetime.day:
+        if (lasttradedatetime is None) or datetradenow.date()<>lasttradedatetime.date():
             #New Day!
             bot.sendMessage(uid, text=u"New Day for stock %s" % row['name'])
             if VERBOSE:
@@ -130,7 +130,6 @@ def main():
 
             c2 = conn.cursor()
             c2.execute("UPDATE strategies SET lasttradedatetime = ? WHERE id = ?;",  (datetradenow, stock['id'])) #update last quote timestamp
-            conn.commit()
 
         #Todo acknowledge that stock was sold
         if qty>0 and nowquotevalue>=(1+minreturn)*buyprice and newdayalert:
@@ -138,6 +137,8 @@ def main():
             bot.sendMessage(uid, text=u"Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (row['name'], symbol, qty, nowquotevalue))
             if VERBOSE:
                 print "Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (row['name'], symbol, qty, nowquotevalue)
+
+    conn.commit()
 
 if __name__ == "__main__":
     main()
