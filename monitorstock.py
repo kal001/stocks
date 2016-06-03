@@ -2,7 +2,7 @@
 # coding=UTF-8
 __author__ = 'fernandolourenco'
 
-VERSION = "0.0.0"
+import version
 
 from googlefinance import getQuotes
 from ystockquote import get_historical_prices
@@ -29,6 +29,7 @@ TAXONDIVIDENDS = 0.26
 COMISSION = 6.95* 1.04
 
 VERBOSE = False
+
 global DATABASE
 
 global newdayalert
@@ -140,5 +141,109 @@ def main():
 
     conn.commit()
 
+def buystock(symbol, qty, price, conn):
+    if qty<=0:
+        return
+
+    now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+
+    c = conn.cursor()
+
+    #update movements
+    c.execute("""
+      insert into movements(stockid,date,qty,value,action)
+      select stocks.id, ?, ?, ?, 'buy'
+      from stocks
+      where stocks.symbolgoogle=?;
+      """, (now, qty, price, symbol))
+
+    #update portfolio
+    c.execute("""
+        select portfolio.id from portfolio,stocks
+        where stocks.symbolgoogle=:symbol and portfolio.stockid=stocks.id
+        """, {"symbol":symbol})
+    row = c.fetchone()
+
+    try:
+        portfolioid = row['id']
+    except:
+        portfolioid = None
+
+    #stock is not yet in portfolio
+    if portfolioid is None:
+        #get stock id
+        c1 = conn.cursor()
+        c1.execute("select id from stocks where symbolgoogle=:id", {"id":symbol})
+        row = c1.fetchone()
+        stockid = row['id']
+
+        #create new record in portfolio
+        c.execute("""
+        insert into portfolio(stockid,qty,cost)
+        values(?,?,?)
+        """, (stockid, qty, price))
+    else:
+        #stock is already in portfolio
+        c.execute("""
+        update portfolio
+        set qty=qty+?, cost=(cost*qty+?*?)/(qty+?)
+        where id=?
+        """, (qty, qty,price, qty, portfolioid))
+
+    conn.commit()
+
+def sellstock(symbol, qty, price, conn):
+    if qty<=0:
+        return
+
+    now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+
+    c = conn.cursor()
+
+    #update movements
+    c.execute("""
+      insert into movements(stockid,date,qty,value,action)
+      select stocks.id, ?, ?, ?, 'sell'
+      from stocks
+      where stocks.symbolgoogle=?;
+      """, (now, qty, price, symbol))
+
+    #update portfolio
+    c.execute("""
+        select portfolio.id from portfolio,stocks
+        where stocks.symbolgoogle=:symbol and portfolio.stockid=stocks.id
+        """, {"symbol":symbol})
+    row = c.fetchone()
+
+    try:
+        portfolioid = row['id']
+
+        c.execute("""
+        update portfolio
+        set qty=qty-?
+        where id=?
+        """, (qty, portfolioid))
+
+        #check if quantity on hand is 0, and if so, delete row from portfolio
+        c.execute("""
+        select qty from portfolio
+        where id=:id
+        """, {"id":portfolioid})
+        row = c.fetchone()
+
+        if float(row['qty']) <= 0:
+            c.execute("""
+            delete from portfolio
+            where id=?""", portfolioid)
+
+    except:
+        if VERBOSE:
+            print "Stock not in portfolio. Cannot sell"
+
+    conn.commit()
+
 if __name__ == "__main__":
-    main()
+    conn = sqlite3.connect('stockdata.sqlite')
+    conn.row_factory = sqlite3.Row
+    sellstock("ELI:JMT", 150, 10, conn)
+    #main()
