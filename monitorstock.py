@@ -1,7 +1,6 @@
 #monitor stocks and alert for buy/sell
 # coding=UTF-8
 __author__ = 'fernandolourenco'
-
 import version
 
 from googlefinance import getQuotes

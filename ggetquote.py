@@ -1,5 +1,6 @@
 #Tracks stocks to sqlite database
 __author__ = 'fernandolourenco'
+import version
 
 from googlefinance import getQuotes
 import ystockquote

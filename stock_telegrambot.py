@@ -1,5 +1,6 @@
 # coding=UTF-8
 __author__ = 'fernandolourenco'
+import version
 
 import datetime
 import time
