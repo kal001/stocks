@@ -142,6 +142,7 @@ def main():
     conn.commit()
 
 def buystock(symbol, qty, price, conn):
+
     if qty<=0:
         return
 
@@ -192,21 +193,16 @@ def buystock(symbol, qty, price, conn):
 
     conn.commit()
 
+    return
+
 def sellstock(symbol, qty, price, conn):
+    success = False
     if qty<=0:
-        return
+        return success
 
     now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
 
     c = conn.cursor()
-
-    #update movements
-    c.execute("""
-      insert into movements(stockid,date,qty,value,action)
-      select stocks.id, ?, ?, ?, 'sell'
-      from stocks
-      where stocks.symbolgoogle=?;
-      """, (now, qty, price, symbol))
 
     #update portfolio
     c.execute("""
@@ -216,7 +212,7 @@ def sellstock(symbol, qty, price, conn):
     row = c.fetchone()
 
     try:
-        portfolioid = row['id']
+        portfolioid = int(row['id'])
 
         c.execute("""
         update portfolio
@@ -231,16 +227,29 @@ def sellstock(symbol, qty, price, conn):
         """, {"id":portfolioid})
         row = c.fetchone()
 
-        if float(row['qty']) <= 0:
-            c.execute("""
-            delete from portfolio
-            where id=?""", portfolioid)
+        conn.commit()
 
-    except:
+        if float(row['qty']) <= 0:
+            c.execute("delete from portfolio where id=?;", (portfolioid, ) )
+
+        #update movements
+        c.execute("""
+            insert into movements(stockid,date,qty,value,action)
+            select stocks.id, ?, ?, ?, 'sell'
+            from stocks
+            where stocks.symbolgoogle=?;
+            """, (now, qty, price, symbol))
+
+        success = True
+
+    except Exception,e:
+        #print str(e)
         if VERBOSE:
             print "Stock not in portfolio. Cannot sell"
 
     conn.commit()
+
+    return success
 
 if __name__ == "__main__":
     conn = sqlite3.connect('stockdata.sqlite')

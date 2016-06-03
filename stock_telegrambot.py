@@ -13,6 +13,8 @@ import sqlite3
 
 import pprint
 
+import monitorstock
+
 from ConfigParser import SafeConfigParser
 
 #Constants
@@ -24,6 +26,11 @@ global uid
 global DATABASE
 
 def handle(msg):
+    global DATABASE
+
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+
     #pprint.pprint(msg)
     message = msg['text'].upper()
     commands = message.split(" ")
@@ -32,31 +39,29 @@ def handle(msg):
         try:
             qty = float(commands[1])
             stock = commands[2]
+            price = float(commands[3])
         except:
-            bot.sendMessage(uid, text=u"Error. Correct syntax /sell quantity google_code" )
+            bot.sendMessage(uid, text=u"Error. Correct syntax /sell quantity google_code price [date]" )
             return
 
-        conn = sqlite3.connect(DATABASE)
-        conn.row_factory = sqlite3.Row
+        try:
+            date = commands[3]
+        except:
+            date = None
+
         c = conn.cursor()
 
         try:
-            c.execute("select strategies.qty, strategies.id from strategies, stocks where symbolgoogle=:symbol and strategies.stockid=stocks.id;", {"symbol":stock})
-            row = c.fetchone()
-            if row['qty'] is None:
-                qtyonhand = 0
+            if monitorstock.sellstock(stock, qty, price, conn):
+                c.execute("select portfolio.qty,portfolio.cost from portfolio, stocks where stocks.symbolgoogle=:symbol and portfolio.stockid=stocks.id", {'symbol':stock})
+                row = c.fetchone()
+                try:
+                    qtyonhand = float(row['qty'])
+                    bot.sendMessage(uid, text=u"Success. Sold %.2f. New quantity on hand %.2f." % (qty, qtyonhand) )
+                except:
+                    bot.sendMessage(uid, text=u"Success. Sold %.2f. Closed position." % (qty) )
             else:
-                qtyonhand = float(row['qty'])
-
-            strategyid = int(row['id'])
-
-            if qtyonhand<qty:
-                bot.sendMessage(uid, text=u"Error. Quantity on hand (%.2f) smaller than requested to sell (%.2f)" % (qtyonhand, qty) )
-            else:
-                c.execute("UPDATE strategies SET qty = ? WHERE id = ?;",  (qtyonhand-qty, strategyid)) #update quantity
-                conn.commit()
-                bot.sendMessage(uid, text=u"Success. Sold %.2f. New quantity on hand %.2f." % (qty, qtyonhand-qty) )
-
+                bot.sendMessage(uid, text=u"Error. Unknown stock or not available to sell %s" % stock )
         except Exception,e:
             #print str(e)
             bot.sendMessage(uid, text=u"Error. Unknown stock or not available to sell %s" % stock )
@@ -69,32 +74,23 @@ def handle(msg):
             stock = commands[2]
             price = float(commands[3])
         except:
-            bot.sendMessage(uid, text=u"Error. Correct syntax /buy quantity google_code price" )
+            bot.sendMessage(uid, text=u"Error. Correct syntax /buy quantity google_code price [date]" )
             return
 
-        conn = sqlite3.connect(DATABASE)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
+        try:
+            date = commands[4]
+        except:
+            date = None
 
         try:
-            c.execute("select strategies.qty, strategies.id, strategies.buyprice from strategies, stocks where symbolgoogle=:symbol and strategies.stockid=stocks.id;", {"symbol":stock})
+            monitorstock.buystock(stock, qty, price, conn)
+
+            c = conn.cursor()
+            c.execute("select portfolio.qty,portfolio.cost from portfolio, stocks where stocks.symbolgoogle=:symbol and portfolio.stockid=stocks.id", {'symbol':stock})
             row = c.fetchone()
-            if row['qty'] is None:
-                qtyonhand = 0
-            else:
-                qtyonhand = float(row['qty'])
-
-            strategyid = int(row['id'])
-
-            if row['buyprice'] is None:
-                buyprice=0
-            else:
-                buyprice = float(row['buyprice'])
-
-            avgprice = (qtyonhand * buyprice + qty * price) / (qtyonhand + qty)
-            c.execute("UPDATE strategies SET qty = ?, buyprice = ? WHERE id = ?;",  (qtyonhand+qty, avgprice, strategyid)) #update quantity and price
-            conn.commit()
-            bot.sendMessage(uid, text=u"Success. Bought %.2f %s @ %.3f. New quantity on hand %.2f. New averageprice %.3f" % (qty, stock, price, qtyonhand+qty, avgprice) )
+            qty = float(row['qty'])
+            avgprice = float(row['cost'])
+            bot.sendMessage(uid, text=u"Success. Bought %.2f %s @ %.3f. New quantity on hand %.2f. New averageprice %.3f" % (qty, stock, price, qty, avgprice) )
 
         except Exception,e:
             #print str(e)
@@ -106,8 +102,14 @@ def handle(msg):
         bot.sendMessage(uid, text=u"Ok. Running")
     elif commands[0] == '/START':
         bot.sendMessage(uid, text=u"Started. Time now\n%s" % datetime.datetime.now())
+    elif commands[0] == '/PORTFOLIO':
+        bot.sendMessage(uid, text=u"QTY\tSTOCK\tPRICE")
+
+        c = conn.cursor()
+        for row in c.execute("select portfolio.qty,portfolio.cost, stocks.name from portfolio, stocks where portfolio.stockid=stocks.id"):
+            bot.sendMessage(uid, text=u"%.2f\t%s\t%.3f" % (float(row['qty']), row['name'], float(row['cost']) ))
     elif commands[0] == '/HELP':
-        bot.sendMessage(uid, text=u"Available commands for %s: /buy, /sell, /status" % os.path.basename(sys.argv[0]))
+        bot.sendMessage(uid, text=u"Available commands for %s: /buy, /sell, /status, /portfolio" % os.path.basename(sys.argv[0]))
     else:
         bot.sendMessage(uid, text=u"Unknown command" )
 
