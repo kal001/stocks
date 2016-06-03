@@ -205,12 +205,15 @@ def sellstock(symbol, qty, price, conn):
 
     #update portfolio
     c.execute("""
-        select portfolio.id from portfolio,stocks
+        select portfolio.id, portfolio.qty from portfolio,stocks
         where stocks.symbolgoogle=:symbol and portfolio.stockid=stocks.id
         """, {"symbol":symbol})
     row = c.fetchone()
 
     try:
+        if float(row['qty'])<qty:
+            return success
+
         portfolioid = int(row['id'])
 
         c.execute("""
@@ -225,8 +228,6 @@ def sellstock(symbol, qty, price, conn):
         where id=:id
         """, {"id":portfolioid})
         row = c.fetchone()
-
-        conn.commit()
 
         if float(row['qty']) <= 0:
             c.execute("delete from portfolio where id=?;", (portfolioid, ) )

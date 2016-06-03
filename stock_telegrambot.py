@@ -62,7 +62,7 @@ def handle(msg):
                 except:
                     bot.sendMessage(uid, text=u"Success. Sold %.2f. Closed position." % (qty) )
             else:
-                bot.sendMessage(uid, text=u"Error. Unknown stock or not available to sell %s" % stock )
+                bot.sendMessage(uid, text=u"Error. Unknown stock; or not available; or not enough quantity to sell %s" % stock )
         except Exception,e:
             #print str(e)
             bot.sendMessage(uid, text=u"Error. Unknown stock or not available to sell %s" % stock )
@@ -107,8 +107,8 @@ def handle(msg):
         bot.sendMessage(uid, text=u"QTY\tSTOCK\tPRICE")
 
         c = conn.cursor()
-        for row in c.execute("select portfolio.qty,portfolio.cost, stocks.name from portfolio, stocks where portfolio.stockid=stocks.id"):
-            bot.sendMessage(uid, text=u"%.2f\t%s\t%.3f" % (float(row['qty']), row['name'], float(row['cost']) ))
+        for row in c.execute("select portfolio.qty,portfolio.cost, stocks.name, stocks.symbolgoogle from portfolio, stocks where portfolio.stockid=stocks.id"):
+            bot.sendMessage(uid, text=u"%.2f\t%s (%s)\t%.3f" % (float(row['qty']), row['name'], row['symbolgoogle'], float(row['cost']) ))
     elif commands[0] == '/HELP':
         bot.sendMessage(uid, text=u"Available commands for %s: /buy, /sell, /status, /portfolio" % os.path.basename(sys.argv[0]))
     else:
