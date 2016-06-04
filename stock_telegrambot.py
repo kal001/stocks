@@ -16,6 +16,8 @@ import monitorstock
 
 from ConfigParser import SafeConfigParser
 
+from googlefinance import getQuotes
+
 #Constants
 # ##########################################################################
 SETTINGSFILE = 'stocks.ini'
@@ -29,6 +31,8 @@ global uid
 global DATABASE
 ##########################################################################
 
+
+##########################################################################
 def handle(msg):
     global DATABASE
 
@@ -49,7 +53,7 @@ def handle(msg):
             return
 
         try:
-            date = commands[3]
+            date = commands[4]
         except:
             date = None
 
@@ -102,8 +106,33 @@ def handle(msg):
             return
 
         conn.close()
+    elif commands[0] == '/DIVIDEND':
+        try:
+            stock = commands[1]
+            dividend = float(commands[2])
+            date = commands[3]
+        except:
+            bot.sendMessage(uid, text=u"Error. Correct syntax /dividend google_code value date" )
+            return
+
+        try:
+            c = conn.cursor()
+            c.execute("select id from stocks where symbolgoogle=:symbol", {'symbol':stock})
+            row = c.fetchone()
+
+            c.execute("""
+            insert into dividends(stockid,date,value)
+            values(?,?,?)
+            """, (int(row['id']), date, float(dividend)))
+
+            conn.commit()
+
+            bot.sendMessage(uid, text=u"Ok. Dividend set for %s" % stock)
+        except:
+            bot.sendMessage(uid, text=u"Error setting dividend for %s" % stock)
+
     elif commands[0] == '/STATUS':
-        bot.sendMessage(uid, text=u"Ok. Running")
+        bot.sendMessage(uid, text=u"Ok. Running\n%s" % version.__version__)
     elif commands[0] == '/START':
         bot.sendMessage(uid, text=u"Started. Time now\n%s" % datetime.datetime.now())
     elif commands[0] == '/PORTFOLIO':
@@ -112,11 +141,42 @@ def handle(msg):
         c = conn.cursor()
         for row in c.execute("select portfolio.qty,portfolio.cost, stocks.name, stocks.symbolgoogle from portfolio, stocks where portfolio.stockid=stocks.id"):
             bot.sendMessage(uid, text=u"%.2f\t%s (%s)\t%.3f" % (float(row['qty']), row['name'], row['symbolgoogle'], float(row['cost']) ))
+    elif commands[0] == '/RETURNS':
+        bot.sendMessage(uid, text=u"QTY\tSTOCK\tRETURN %")
+
+        c = conn.cursor()
+        for row in c.execute("select portfolio.qty,portfolio.cost, portfolio.stockid, stocks.name, stocks.symbolgoogle from portfolio, stocks where portfolio.stockid=stocks.id"):
+            c1 = conn.cursor()
+            c1.execute("select * from movements where stockid=:id order by date ASC", {'id':int(row['stockid'])})
+            movements = c1.fetchall()
+
+            investment = 0.0
+            cash = 0.0
+
+            for movement in movements:
+                if movement['action'].upper() == 'BUY':
+                    investment += movement['qty'] * movement['value']
+                elif movement['action'].upper() == 'SELL':
+                    cash += movement['qty'] * movement['value']
+
+            symbol = str(row["symbolgoogle"])
+            quote = getQuotes(symbol)[0]["LastTradePrice"]  #get quote
+            cash += float(row['qty']) * float(quote)
+
+            if investment<>0:
+                ireturn = (cash/investment-1)*100
+            else:
+                ireturn = 0
+
+            bot.sendMessage(uid, text=u"%.2f\t%s\t%.1f" % (float(row['qty']), row['name'], ireturn))
+
     elif commands[0] == '/HELP':
-        bot.sendMessage(uid, text=u"Available commands for %s: /buy, /sell, /status, /portfolio" % os.path.basename(sys.argv[0]))
+        bot.sendMessage(uid, text=u"Available commands for %s:\n /buy, /sell, /dividend, /status, /portfolio, /returns" % os.path.basename(sys.argv[0]))
     else:
         bot.sendMessage(uid, text=u"Unknown command" )
+##########################################################################
 
+##########################################################################
 def main():
     global bot
     global uid
@@ -144,6 +204,8 @@ def main():
     # Keep the program running.
     while 1:
         time.sleep(10)
+##########################################################################
+
 
 if __name__ == "__main__":
     main()

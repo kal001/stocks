@@ -13,8 +13,6 @@ import datetime
 import dateutil.parser
 import pytz
 
-import ggetquote
-
 import telepot
 
 from ConfigParser import SafeConfigParser
@@ -39,6 +37,7 @@ global DATABASE
 global newdayalert
 ##########################################################################
 
+##########################################################################
 def main():
     global newdayalert
 
@@ -71,7 +70,7 @@ def main():
         row = c1.fetchone()
 
         #Check if market open
-        if not(ggetquote.checkifmarketopen(row["exchangeid"], row['symbolgoogle'], row['name'],conn)):
+        if not(checkifmarketopen(row["exchangeid"], row['symbolgoogle'], row['name'],conn)):
             continue
 
         symbol = str(row["symbolgoogle"])
@@ -143,13 +142,15 @@ def main():
                 print "Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (row['name'], symbol, qty, nowquotevalue)
 
     conn.commit()
+##########################################################################
 
+##########################################################################
 def buystock(symbol, qty, price, date, conn):
 
     if qty<=0:
         return
 
-    if date is none:
+    if date is None:
         now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
     else:
         now = date
@@ -200,13 +201,15 @@ def buystock(symbol, qty, price, date, conn):
     conn.commit()
 
     return
+##########################################################################
 
+##########################################################################
 def sellstock(symbol, qty, price, date, conn):
     success = False
     if qty<=0:
         return success
 
-    if date is none:
+    if date is None:
         now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
     else:
         now = date
@@ -260,6 +263,76 @@ def sellstock(symbol, qty, price, date, conn):
     conn.commit()
 
     return success
+##########################################################################
+
+##########################################################################
+def checkifmarketopen(exchangeid, stocksymbol, stockname, conn):
+    daytoday = str(datetime.datetime.utcnow().weekday())
+    datetoday = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+    year = datetime.datetime.utcnow().year
+
+    #see if the stock exchange is opened today
+    exchangeid = int(exchangeid)
+    c1 = conn.cursor()
+    c1.execute("select * from exchanges where id=:id;", {"id":exchangeid})
+    exchange = c1.fetchone()
+    opendays = exchange["workingdays"].split(",")
+
+    if not(daytoday in opendays): #if stockmarket closed, pass
+        if VERBOSE:
+            print "Stock market %s in weekend for stock %s(%s)" % (exchange['shortnamegoogle'], stocksymbol,stockname)
+        return False
+
+    #see if today is a holliday in the stock exchange
+    country = exchange["countrycode"]
+
+    isholliday = False
+
+    #check to see if database knows if this date is holliday
+    c2 = conn.cursor()
+    c2.execute("select * from hollidays where country=:country and date=:date;", {"country":country, "date":datetoday})
+    getholliday = c2.fetchone()
+    if getholliday is None: # date is not yet in database for this country
+        #check online to see if this date is holliday
+        try:
+            r = requests.get("http://kayaposoft.com/enrico/json/v1.0/?action=getPublicHolidaysForYear&year=%d&country=%s" % (year, country))
+            for date in r.json():
+                holliday = datetime.date(date['date']['year'], date['date']['month'], date['date']['day'])
+                if datetime.datetime.today() == holliday:
+                    isholliday = True
+                    break
+        except:
+            pass
+
+        #save date to database for this country
+        c2 = conn.cursor()
+        c2.execute("INSERT INTO hollidays(country,date,holliday) VALUES (?,?,?);", (country, datetoday, isholliday)) #save date as holliday
+        conn.commit()
+
+    else: # date is allready in database for this country
+        isholliday = getholliday['holliday']
+
+    if isholliday: #if today is holliday, pass
+        if VERBOSE:
+            print "Stock market %s in holliday for stock %s(%s)" % (exchange['shortnamegoogle'], stocksymbol,stockname)
+        return False
+
+    #see if the stock exchange is opened now
+    now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+    openhour = exchange["openhour"]
+    closehour = exchange["closehour"]
+
+    if not(openhour is None) and not(closehour is None):
+        openhour = dateutil.parser.parse(openhour)
+        closehour = dateutil.parser.parse(closehour)
+
+        if (now<openhour) or (now>closehour): #if stockmarket closed, pass
+            if VERBOSE:
+                print "Stock market %s closed for stock %s(%s)" % (exchange['shortnamegoogle'], stocksymbol,stockname)
+            return False
+
+    return True
+##########################################################################
 
 if __name__ == "__main__":
     main()
