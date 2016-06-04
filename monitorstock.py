@@ -23,15 +23,21 @@ import sys
 import os
 
 #Constants
+##########################################################################
 CASH = 10000
 TAXONDIVIDENDS = 0.26
 COMISSION = 6.95* 1.04
 
 VERBOSE = False
 
-global DATABASE
+SETTINGSFILE = 'stocks.ini'
+##########################################################################
 
+#Globals
+##########################################################################
+global DATABASE
 global newdayalert
+##########################################################################
 
 def main():
     global newdayalert
@@ -40,7 +46,7 @@ def main():
     parser = SafeConfigParser()
 
     # Open the file with the correct encoding
-    with codecs.open('stocks.ini', 'r', encoding='utf-8') as f:
+    with codecs.open(SETTINGSFILE, 'r', encoding='utf-8') as f:
         parser.readfp(f)
 
     DATABASE = parser.get('Database', 'File')
@@ -49,7 +55,7 @@ def main():
         # Create access to bot
         bot = telepot.Bot(parser.get('Telegram', 'token'))
         uid = parser.get('Telegram', 'uid')
-        # bot.sendMessage(uid, text=u"Start %s\n%s" % (os.path.basename(sys.argv[0]), datetime.datetime.now()))
+        # bot.sendMessage(uid, text=u"Start %s\n%s\n%s" % (os.path.basename(sys.argv[0]), version.__version__, datetime.datetime.now()))
     except:
         print u'Cannot access Telegram. Please do /start'
         sys.exit(1)
@@ -120,7 +126,6 @@ def main():
 
                 quoteant = float(day[1]["Close"])
 
-            #Todo acknowledge that stock was bought
             #Number of days descending reached, and opend low
             if countlow>=lowcount and nowquotevalue<quoteant:
                 qty = int((CASH-COMISSION)/nowquotevalue)
@@ -131,7 +136,6 @@ def main():
             c2 = conn.cursor()
             c2.execute("UPDATE strategies SET lasttradedatetime = ? WHERE id = ?;",  (datetradenow, stock['id'])) #update last quote timestamp
 
-        #Todo acknowledge that stock was sold
         if qty>0 and nowquotevalue>=(1+minreturn)*buyprice and newdayalert:
             newdayalert = False
             bot.sendMessage(uid, text=u"Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (row['name'], symbol, qty, nowquotevalue))
@@ -140,12 +144,15 @@ def main():
 
     conn.commit()
 
-def buystock(symbol, qty, price, conn):
+def buystock(symbol, qty, price, date, conn):
 
     if qty<=0:
         return
 
-    now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+    if date is none:
+        now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+    else:
+        now = date
 
     c = conn.cursor()
 
@@ -194,12 +201,15 @@ def buystock(symbol, qty, price, conn):
 
     return
 
-def sellstock(symbol, qty, price, conn):
+def sellstock(symbol, qty, price, date, conn):
     success = False
     if qty<=0:
         return success
 
-    now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+    if date is none:
+        now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+    else:
+        now = date
 
     c = conn.cursor()
 
@@ -252,7 +262,4 @@ def sellstock(symbol, qty, price, conn):
     return success
 
 if __name__ == "__main__":
-    conn = sqlite3.connect('stockdata.sqlite')
-    conn.row_factory = sqlite3.Row
-    sellstock("ELI:JMT", 150, 10, conn)
-    #main()
+    main()

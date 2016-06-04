@@ -12,19 +12,22 @@ import os
 
 import sqlite3
 
-import pprint
-
 import monitorstock
 
 from ConfigParser import SafeConfigParser
 
 #Constants
+# ##########################################################################
 SETTINGSFILE = 'stocks.ini'
+##########################################################################
 
+#Globals
+##########################################################################
 global bot
 global uid
 
 global DATABASE
+##########################################################################
 
 def handle(msg):
     global DATABASE
@@ -53,7 +56,7 @@ def handle(msg):
         c = conn.cursor()
 
         try:
-            if monitorstock.sellstock(stock, qty, price, conn):
+            if monitorstock.sellstock(stock, qty, price, date, conn):
                 c.execute("select portfolio.qty,portfolio.cost from portfolio, stocks where stocks.symbolgoogle=:symbol and portfolio.stockid=stocks.id", {'symbol':stock})
                 row = c.fetchone()
                 try:
@@ -84,7 +87,7 @@ def handle(msg):
             date = None
 
         try:
-            monitorstock.buystock(stock, qty, price, conn)
+            monitorstock.buystock(stock, qty, price, date, conn)
 
             c = conn.cursor()
             c.execute("select portfolio.qty,portfolio.cost from portfolio, stocks where stocks.symbolgoogle=:symbol and portfolio.stockid=stocks.id", {'symbol':stock})
@@ -130,7 +133,7 @@ def main():
         bot = telepot.Bot(parser.get('Telegram', 'token'))
         bot.message_loop(handle)
         uid = parser.get('Telegram', 'uid')
-        bot.sendMessage(uid, text=u"Start %s\n%s" % (os.path.basename(sys.argv[0]), datetime.datetime.now()))
+        bot.sendMessage(uid, text=u"Start %s\n%s\n%s" % (os.path.basename(sys.argv[0]), version.__version__, datetime.datetime.now()))
     except:
         print u'Cannot access Telegram. Please do /start'
         sys.exit(1)

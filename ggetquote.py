@@ -13,11 +13,32 @@ import pytz
 
 import requests
 
-VERBOSE = False
+import codecs
+from ConfigParser import SafeConfigParser
 
-DATABASE = 'stockdata.sqlite'
+#Constants
+##########################################################################
+SETTINGSFILE = 'stocks.ini'
+VERBOSE = False
+##########################################################################
+
+#Globals
+##########################################################################
+global DATABASE
+##########################################################################
+
 
 def main():
+    # Read config file
+    parser = SafeConfigParser()
+
+    # Open the file with the correct encoding
+    with codecs.open(SETTINGSFILE, 'r', encoding='utf-8') as f:
+        parser.readfp(f)
+
+    global DATABASE
+    DATABASE = parser.get('Database', 'File')
+
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
