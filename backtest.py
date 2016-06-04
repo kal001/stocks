@@ -1,11 +1,23 @@
 #Test strategy
 __author__ = 'fernandolourenco'
+import version
 
 from ystockquote import get_historical_prices
 import operator
 
 import sqlite3
 
+import codecs
+from ConfigParser import SafeConfigParser
+
+import datetime
+
+import sys
+import os
+
+#Constants
+##########################################################################
+SETTINGSFILE = 'stocks.ini'
 VERBOSE = True
 
 #Strategy
@@ -15,8 +27,22 @@ MINRETURN = 0.05
 #Constants
 TAXONDIVIDENDS = 0.26
 COMISSION = 14.95* 1.04
+##########################################################################
 
-conn = sqlite3.connect('stockdata.sqlite')
+ # Read config file
+parser = SafeConfigParser()
+
+# Open the file with the correct encoding
+with codecs.open(SETTINGSFILE, 'r', encoding='utf-8') as f:
+    parser.readfp(f)
+
+global DATABASE
+DATABASE = parser.get('Database', 'File')
+
+if VERBOSE:
+    print "Start %s\n%s\n%s\n\n" % (os.path.basename(sys.argv[0]), version.__version__, datetime.datetime.now())
+
+conn = sqlite3.connect(DATABASE)
 conn.row_factory = sqlite3.Row
 
 c = conn.cursor()
