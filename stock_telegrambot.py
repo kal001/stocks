@@ -146,6 +146,7 @@ def handle(msg):
 
         c = conn.cursor()
         for row in c.execute("select portfolio.qty,portfolio.cost, portfolio.stockid, stocks.name, stocks.symbolgoogle from portfolio, stocks where portfolio.stockid=stocks.id"):
+            comission, taxondividends = monitorstock.getmarketoptions(row['stockid'], conn)
             c1 = conn.cursor()
             c1.execute("select * from movements where stockid=:id order by date ASC", {'id':int(row['stockid'])})
             movements = c1.fetchall()
@@ -155,9 +156,11 @@ def handle(msg):
 
             for movement in movements:
                 if movement['action'].upper() == 'BUY':
-                    investment += movement['qty'] * movement['value']
+                    investment += movement['qty'] * movement['value'] + comission
                 elif movement['action'].upper() == 'SELL':
-                    cash += movement['qty'] * movement['value']
+                    cash += movement['qty'] * movement['value'] - comission
+                elif movement['action'].upper() == 'DIVIDEND':
+                    cash += movement['qty'] * movement['value'] * (1-taxondividends)
 
             symbol = str(row["symbolgoogle"])
             quote = getQuotes(symbol)[0]["LastTradePrice"]  #get quote

@@ -123,6 +123,7 @@ def main():
 
             c2 = conn.cursor()
             c2.execute("UPDATE stocks SET lastquotestamp = ?, lastquote = ?  WHERE id = ?;",  (datetradenow, nowquotevalue, stock['stockid'])) #update last quote timestamp
+            conn.commit()
 
         if qty>0 and nowquotevalue>=(1+minreturn)*buyprice and newdayalert:
             newdayalert = False
@@ -130,7 +131,6 @@ def main():
             if VERBOSE:
                 print "Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (stock['name'], symbol, qty, nowquotevalue)
 
-    conn.commit()
 ##########################################################################
 
 ##########################################################################
@@ -146,8 +146,6 @@ def checkifdividendday(today, conn):
             insert into movements(stockid,date,qty,value,action)
             values(?,?,?,?,?)
             """, (int(dividend['stockid']), today, float(portfolio['qty']), float(dividend['value']), 'dividend'))
-
-            conn.commit()
 ##########################################################################
 
 ##########################################################################
@@ -370,6 +368,29 @@ def checkifmarketopen(exchangeid, stocksymbol, stockname, conn):
 
     return True
 ##########################################################################
+
+##########################################################################
+def getmarketoptions(stockid, conn):
+    comission = 0.0
+    taxondividends = 0.0
+
+    c = conn.cursor()
+    c.execute("""
+                select comission, taxondividends
+                from exchanges, stocks
+                where exchanges.id=stocks.exchangeid and stocks.id=:id
+                """, {'id':stockid})
+
+    try:
+        row = c.fetchone()
+        comission = float(row['comission'])
+        taxondividends = float(row['taxondividends'])
+    except:
+        pass
+
+    return comission, taxondividends
+##########################################################################
+
 
 if __name__ == "__main__":
     main()
