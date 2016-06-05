@@ -62,16 +62,17 @@ def main():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
 
-    c = conn.cursor()
+    print getstockreturn(9,conn)
 
+    c = conn.cursor()
     for stock in c.execute("""
                 select strategies.*, stocks.name, stocks.symbolgoogle, stocks.symbolyahoo, stocks.exchangeid, stocks.lastquotestamp
                 from strategies, stocks
                 where strategies.stockid=stocks.id and active='True';
                 """):
         #Check if market open
-        #if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
-        #    continue
+        if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
+            continue
 
         symbol = str(stock["symbolgoogle"])
         minreturn = float(stock['minreturn'])
@@ -391,6 +392,77 @@ def getmarketoptions(stockid, conn):
     return comission, taxondividends
 ##########################################################################
 
+##########################################################################
+def getexchangerate(stockid, date, conn):
+    c = conn.cursor()
+    c.execute("""
+                select currencies.shortname
+                from stocks, currencies
+                where currencies.id=stocks.currencyid and stocks.id=:id
+                """, {'id':stockid})
+    stockcurrency = str(c.fetchone()['shortname'])
+    c.execute("select value from options where name='Base Currency'")
+    basecurrency = str(c.fetchone()['value'])
+
+    if basecurrency == stockcurrency:
+        return 1.0
+
+    cross = basecurrency+stockcurrency
+    date = dateutil.parser.parse(date).replace(hour=23,minute=59,second=59)
+    c.execute("""
+                select quotes.timestamp, quotes.value
+                from quotes, stocks
+                where quotes.stockid=stocks.id and stocks.symbolgoogle=:cross and quotes.timestamp<=:date
+                order by timestamp desc
+                """, {'cross':cross, 'date':date})
+
+    exchange = 1.0
+
+    try:
+        row = c.fetchone()
+        exchange = row['value']
+        exchange = float(exchange)
+    except:
+        exchange = 1.0
+
+    return exchange
+##########################################################################
+
+##########################################################################
+def getstockreturn(stockid, conn):
+    comission, taxondividends = getmarketoptions(stockid, conn)
+
+    c = conn.cursor()
+    c.execute("select * from movements where stockid=:id order by date ASC", {'id':int(stockid)})
+    movements = c.fetchall()
+
+    investment = 0.0
+    cash = 0.0
+
+    for movement in movements:
+        exchange = getexchangerate(stockid,movement['date'],conn)
+
+        if movement['action'].upper() == 'BUY':
+            investment += movement['qty'] * movement['value'] / exchange + comission
+        elif movement['action'].upper() == 'SELL':
+            cash += movement['qty'] * movement['value'] / exchange - comission
+        elif movement['action'].upper() == 'DIVIDEND':
+            cash += movement['qty'] * movement['value'] / exchange * (1-taxondividends)
+
+    c.execute("select symbolgoogle from stocks where id=:id", {'id':int(stockid)})
+    symbol = str(c.fetchone()['symbolgoogle'])
+    quote = getQuotes(symbol)[0]["LastTradePrice"]  #get quote
+    c.execute("select qty from portfolio where stockid=:id", {'id':int(stockid)})
+    qty = float(c.fetchone()['qty'])
+    cash += qty * float(quote) / exchange
+
+    if investment<>0:
+        ireturn = (cash/investment-1)*100
+    else:
+        ireturn = 0
+
+    return ireturn
+##########################################################################
 
 if __name__ == "__main__":
     main()

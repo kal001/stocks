@@ -146,30 +146,7 @@ def handle(msg):
 
         c = conn.cursor()
         for row in c.execute("select portfolio.qty,portfolio.cost, portfolio.stockid, stocks.name, stocks.symbolgoogle from portfolio, stocks where portfolio.stockid=stocks.id"):
-            comission, taxondividends = monitorstock.getmarketoptions(row['stockid'], conn)
-            c1 = conn.cursor()
-            c1.execute("select * from movements where stockid=:id order by date ASC", {'id':int(row['stockid'])})
-            movements = c1.fetchall()
-
-            investment = 0.0
-            cash = 0.0
-
-            for movement in movements:
-                if movement['action'].upper() == 'BUY':
-                    investment += movement['qty'] * movement['value'] + comission
-                elif movement['action'].upper() == 'SELL':
-                    cash += movement['qty'] * movement['value'] - comission
-                elif movement['action'].upper() == 'DIVIDEND':
-                    cash += movement['qty'] * movement['value'] * (1-taxondividends)
-
-            symbol = str(row["symbolgoogle"])
-            quote = getQuotes(symbol)[0]["LastTradePrice"]  #get quote
-            cash += float(row['qty']) * float(quote)
-
-            if investment<>0:
-                ireturn = (cash/investment-1)*100
-            else:
-                ireturn = 0
+            ireturn = monitorstock.getstockreturn(row['stockid'], conn)
 
             bot.sendMessage(uid, text=u"%.2f\t%s\t%.1f" % (float(row['qty']), row['name'], ireturn))
 
