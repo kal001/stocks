@@ -64,84 +64,121 @@ def main():
 
     c = conn.cursor()
 
-    for stock in c.execute("select id, stockid, lowcount, minreturn, lasttradedatetime, qty, buyprice from strategies where active='True';"):
-        c1 = conn.cursor()
-        c1.execute("select symbolgoogle,symbolyahoo,exchangeid,name from stocks where id=:id;", {"id":stock['stockid']})
-        row = c1.fetchone()
-
+    for stock in c.execute("""
+                select strategies.*, stocks.name, stocks.symbolgoogle, stocks.symbolyahoo, stocks.exchangeid, stocks.lastquotestamp
+                from strategies, stocks
+                where strategies.stockid=stocks.id and active='True';
+                """):
         #Check if market open
-        if not(checkifmarketopen(row["exchangeid"], row['symbolgoogle'], row['name'],conn)):
-            continue
+        #if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
+        #    continue
 
-        symbol = str(row["symbolgoogle"])
-        if not(stock['qty'] is None):
-            qty = float(stock['qty'])
-        else:
-            qty = 0
-        if not(stock['buyprice'] is None):
-            buyprice = float(stock['buyprice'])
-        else:
-            buyprice = 0
+        symbol = str(stock["symbolgoogle"])
         minreturn = float(stock['minreturn'])
         lowcount = int(stock['lowcount'])
-        if not(stock['lasttradedatetime'] is None):
-            lasttradedatetime = dateutil.parser.parse(stock['lasttradedatetime'])
-        else:
+
+        c1 = conn.cursor()
+        c1.execute("""
+                  select portfolio.*, stocks.lastquotestamp
+                  from portfolio, stocks
+                  where portfolio.stockid=:id and portfolio.stockid=stocks.id
+                  """, {'id':stock['stockid']})
+        stockinportfolio = c1.fetchone()
+
+        try:
+            qty = float(stockinportfolio['qty'])
+            buyprice = float(stockinportfolio['cost'])
+        except:
+            qty = 0
+            buyprice = 0
+
+        try:
+            lasttradedatetime = dateutil.parser.parse(stock['lastquotestamp'])
+        except:
             lasttradedatetime = None
 
         #Get current quote
         quote = getQuotes(symbol)[0]
-        datetradenow = dateutil.parser.parse(quote["LastTradeDateTimeLong"])  #get current last trade time on market
+        datetradenow = dateutil.parser.parse(quote["LastTradeDateTimeLong"]) #get current last trade time on market
         nowquotevalue = float(quote['LastTradePrice']) #get last quote
 
         newdayalert = False
 
         if (lasttradedatetime is None) or datetradenow.date()<>lasttradedatetime.date():
             #New Day!
-            bot.sendMessage(uid, text=u"New Day for stock %s" % row['name'])
+            bot.sendMessage(uid, text=u"New Day for stock %s" % stock['name'])
             if VERBOSE:
-                print "New Day for stock %s" % row['name']
+                print "New Day for stock %s" % stock['name']
             newdayalert = True
 
-            #get last days of quotes
-            quotes = get_historical_prices(row["symbolyahoo"], (datetradenow-datetime.timedelta(days=lowcount)).strftime("%Y-%m-%d"), (datetradenow-datetime.timedelta(days=1)).strftime("%Y-%m-%d"))
-            sortedquotes = sorted(quotes.items(), key=operator.itemgetter(0))
-
-            #check if number of days descending reached
-            quoteant = 0.0
-            countlow = 0
-            for day in sortedquotes:
-                #calculate day return
-                if quoteant <> 0:
-                    dayreturn = (float(day[1]["Close"])-quoteant)/quoteant
-                else:
-                    dayreturn = 0
-
-                #increase number of consecutive days lowering
-                if dayreturn<0.0:
-                    countlow = countlow+1
-                else:
-                    countlow = 0
-
-                quoteant = float(day[1]["Close"])
-
+        if newdayalert:
             #Number of days descending reached, and opend low
-            if countlow>=lowcount and nowquotevalue<quoteant:
+            if checkiftimetobuy(stock['symbolyahoo'], lowcount, datetradenow, nowquotevalue):
                 qty = int((CASH-COMISSION)/nowquotevalue)
-                bot.sendMessage(uid, text=u"Time to BUY %s (%s) Qty = %8.2f Price = %8.3f" % (row['name'], symbol, qty, nowquotevalue))
+                bot.sendMessage(uid, text=u"Time to BUY %s (%s) Qty = %8.2f Price = %8.3f" % (stock['name'], symbol, qty, nowquotevalue))
                 if VERBOSE:
-                    print "Time to BUY %s (%s) Qty = %8.2f Price = %8.3f" % (row['name'], symbol, qty, nowquotevalue)
+                    print "Time to BUY %s (%s) Qty = %8.2f Price = %8.3f" % (stock['name'], symbol, qty, nowquotevalue)
+
+            checkifdividendday(datetradenow.date() ,conn)
 
             c2 = conn.cursor()
-            c2.execute("UPDATE strategies SET lasttradedatetime = ? WHERE id = ?;",  (datetradenow, stock['id'])) #update last quote timestamp
+            c2.execute("UPDATE stocks SET lastquotestamp = ?, lastquote = ?  WHERE id = ?;",  (datetradenow, nowquotevalue, stock['stockid'])) #update last quote timestamp
 
         if qty>0 and nowquotevalue>=(1+minreturn)*buyprice and newdayalert:
             newdayalert = False
-            bot.sendMessage(uid, text=u"Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (row['name'], symbol, qty, nowquotevalue))
+            bot.sendMessage(uid, text=u"Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (stock['name'], symbol, qty, nowquotevalue))
             if VERBOSE:
-                print "Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (row['name'], symbol, qty, nowquotevalue)
+                print "Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (stock['name'], symbol, qty, nowquotevalue)
 
     conn.commit()
+##########################################################################
+
+##########################################################################
+def checkifdividendday(today, conn):
+    c = conn.cursor()
+    for dividend in c.execute("select * from dividends where date=:date", {'date':today}):
+        c1 = conn.cursor()
+        c1.execute("select * from portfolio where stockid=:id", {'id':dividend['stockid']})
+        portfolio = c1.fetchone()
+        if not(portfolio is None):
+            c2 = conn.cursor()
+            c2.execute("""
+            insert into movements(stockid,date,qty,value,action)
+            values(?,?,?,?,?)
+            """, (int(dividend['stockid']), today, float(portfolio['qty']), float(dividend['value']), 'dividend'))
+
+            conn.commit()
+##########################################################################
+
+##########################################################################
+def checkiftimetobuy(symbol, lowcount, datetradenow, nowquotevalue):
+    #get last days of quotes
+    quotes = get_historical_prices(symbol, (datetradenow-datetime.timedelta(days=lowcount)).strftime("%Y-%m-%d"), (datetradenow-datetime.timedelta(days=1)).strftime("%Y-%m-%d"))
+    sortedquotes = sorted(quotes.items(), key=operator.itemgetter(0))
+
+    #check if number of days descending reached
+    quoteant = 0.0
+    countlow = 0
+    for day in sortedquotes:
+        #calculate day return
+        if quoteant <> 0:
+            dayreturn = (float(day[1]["Close"])-quoteant)/quoteant
+        else:
+            dayreturn = 0
+
+        #increase number of consecutive days lowering
+        if dayreturn<0.0:
+            countlow = countlow+1
+        else:
+            countlow = 0
+
+        quoteant = float(day[1]["Close"])
+
+    #Number of days descending reached, and opend low
+    if countlow>=lowcount and nowquotevalue<quoteant:
+        return True
+    else:
+        return False
 ##########################################################################
 
 ##########################################################################
