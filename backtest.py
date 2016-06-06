@@ -79,7 +79,7 @@ for STOCK in stocks:
 
     for day in sortedquotes:
         #calculate day return
-        if quoteant <> 0:
+        if quoteant != 0:
             dayreturn = (float(day[1]["Close"])-quoteant)/quoteant
         else:
             dayreturn = 0

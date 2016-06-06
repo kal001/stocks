@@ -117,7 +117,7 @@ def main():
 
         newdayalert = False
 
-        if (lasttradedatetime is None) or datetradenow.date()<>lasttradedatetime.date():
+        if (lasttradedatetime is None) or datetradenow.date()!=lasttradedatetime.date():
             #New Day!
             bot.sendMessage(uid, text=u"New Day for stock %s" % stock['name'])
             if VERBOSE:
@@ -146,8 +146,8 @@ def main():
 
     #Update quotes in tracked stocks
     for stock in c.execute("select * from stocks where tracked='True'"):
-        #if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
-        #    continue
+        if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
+            continue
         if (stock['lastquotestamp'] is None) or (dateutil.parser.parse(stock['lastquotestamp'])+datetime.timedelta(minutes=int(stock['interval'])) <datetime.datetime.utcnow().replace(tzinfo = pytz.utc)):
             timestamp, nowquotevalue = savequote(int(stock['id']),conn)
             c2 = conn.cursor()
@@ -182,7 +182,7 @@ def checkiftimetobuy(symbol, lowcount, datetradenow, nowquotevalue):
     countlow = 0
     for day in sortedquotes:
         #calculate day return
-        if quoteant <> 0:
+        if quoteant != 0:
             dayreturn = (float(day[1]["Close"])-quoteant)/quoteant
         else:
             dayreturn = 0
@@ -221,7 +221,7 @@ def buystock(symbol, qty, price, date, conn):
 
         #save currency exchange ratio
         cross, crossid = getexchangesymbol(stockid,conn)
-        if cross <>'':
+        if cross !='':
             er = get_price(cross)
             c.execute("""
                   insert into quotes(stockid,timestamp,value)
@@ -301,7 +301,7 @@ def sellstock(symbol, qty, price, date, conn):
 
         #save currency exchange ratio
         cross, crossid = getexchangesymbol(stockid,conn)
-        if cross <>'':
+        if cross !='':
             er = get_price(cross)
             c.execute("""
                   insert into quotes(stockid,timestamp,value)
@@ -547,7 +547,7 @@ def getstockreturn(stockid, conn):
     qty = float(c.fetchone()['qty'])
     cash += qty * float(quote) / exchange
 
-    if investment<>0:
+    if investment!=0:
         ireturn = (cash/investment-1)*100
     else:
         ireturn = 0
