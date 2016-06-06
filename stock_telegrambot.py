@@ -96,9 +96,8 @@ def handle(msg):
             c = conn.cursor()
             c.execute("select portfolio.qty,portfolio.cost from portfolio, stocks where stocks.symbolgoogle=:symbol and portfolio.stockid=stocks.id", {'symbol':stock})
             row = c.fetchone()
-            qty = float(row['qty'])
             avgprice = float(row['cost'])
-            bot.sendMessage(uid, text=u"Success. Bought %.2f %s @ %.3f. New quantity on hand %.2f. New averageprice %.3f" % (qty, stock, price, qty, avgprice) )
+            bot.sendMessage(uid, text=u"Success. Bought %.2f %s @ %.3f. New quantity on hand %.2f. New averageprice %.3f" % (qty, stock, price, float(row['qty']), avgprice) )
 
         except Exception,e:
             #print str(e)

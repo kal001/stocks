@@ -36,11 +36,14 @@ HOLIDAYSERVICE = "http://kayaposoft.com/enrico/json/v1.0/?action=getPublicHolida
 ##########################################################################
 global DATABASE
 global newdayalert
+global tzd #timezones object
 ##########################################################################
 
 ##########################################################################
 def main():
     global newdayalert
+
+    initializetz()
 
     # Read config file
     parser = SafeConfigParser()
@@ -103,8 +106,13 @@ def main():
 
         #Get current quote
         quote = getQuotes(symbol)[0]
-        datetradenow = dateutil.parser.parse(quote["LastTradeDateTimeLong"]) #get current last trade time on market
-        #ToDo convert timezones like EST to correct offset
+        correcteddate = quote["LastTradeDateTimeLong"]
+        #parse uses posix stype for timezone offsets. ISO requires inversion in sign!!
+        if correcteddate.find('+'):
+            correcteddate=correcteddate.replace('+', '-')
+        elif correcteddate.find('-'):
+            correcteddate=correcteddate.replace('-', '+')
+        datetradenow = dateutil.parser.parse(correcteddate, tzinfos=tzd) #get current last trade time on market
         nowquotevalue = float(quote['LastTradePrice']) #get last quote
 
         newdayalert = False
@@ -138,8 +146,8 @@ def main():
 
     #Update quotes in tracked stocks
     for stock in c.execute("select * from stocks where tracked='True'"):
-        if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
-            continue
+        #if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
+        #    continue
         if (stock['lastquotestamp'] is None) or (dateutil.parser.parse(stock['lastquotestamp'])+datetime.timedelta(minutes=int(stock['interval'])) <datetime.datetime.utcnow().replace(tzinfo = pytz.utc)):
             timestamp, nowquotevalue = savequote(int(stock['id']),conn)
             c2 = conn.cursor()
@@ -558,10 +566,15 @@ def savequote(stockid, conn):
         symbol = str(row['symbolgoogle'])
         quote = getQuotes(symbol) #get quote
         value = quote[0]["LastTradePrice"]
-        date = dateutil.parser.parse(quote[0]["LastTradeDateTimeLong"]) #.replace(tzinfo = pytz.utc)
+        #parse uses posix stype for timezone offsets. ISO requires inversion in sign!!
+        correcteddate = quote[0]["LastTradeDateTimeLong"]
+        if correcteddate.find('+'):
+            correcteddate=correcteddate.replace('+', '-')
+        elif correcteddate.find('-'):
+            correcteddate=correcteddate.replace('-', '+')
+        date = dateutil.parser.parse(correcteddate, tzinfos=tzd)
         timestamp = date.isoformat()
         if date.tzinfo is None:
-            #ToDo convert timezones like EST to correct offset
             timestamp += 'Z'
 
     elif row['type'].upper() == 'CURRENCY':
@@ -580,6 +593,56 @@ def savequote(stockid, conn):
     return timestamp, float(value)
 ##########################################################################
 
+##########################################################################
+def initializetz():
+    global tzd
 
+    tz_str = '''-12 Y
+    -11 X NUT SST
+    -10 W CKT HAST HST TAHT TKT
+    -9 V AKST GAMT GIT HADT HNY
+    -8 U AKDT CIST HAY HNP PST PT
+    -7 T HAP HNR MST PDT
+    -6 S CST EAST GALT HAR HNC MDT
+    -5 R CDT COT EASST ECT EST ET HAC HNE PET
+    -4 Q AST BOT CLT COST EDT FKT GYT HAE HNA PYT
+    -3 P ADT ART BRT CLST FKST GFT HAA PMST PYST SRT UYT WGT
+    -2 O BRST FNT PMDT UYST WGST
+    -1 N AZOT CVT EGT
+    0 Z EGST GMT UTC WET WT
+    1 A CET DFT WAT WEDT WEST
+    2 B CAT CEDT CEST EET SAST WAST
+    3 C EAT EEDT EEST IDT MSK
+    4 D AMT AZT GET GST KUYT MSD MUT RET SAMT SCT
+    5 E AMST AQTT AZST HMT MAWT MVT PKT TFT TJT TMT UZT YEKT
+    6 F ALMT BIOT BTT IOT KGT NOVT OMST YEKST
+    7 G CXT DAVT HOVT ICT KRAT NOVST OMSST THA WIB
+    8 H ACT AWST BDT BNT CAST HKT IRKT KRAST MYT PHT SGT ULAT WITA WST
+    9 I AWDT IRKST JST KST PWT TLT WDT WIT YAKT
+    10 K AEST ChST PGT VLAT YAKST YAPT
+    11 L AEDT LHDT MAGT NCT PONT SBT VLAST VUT
+    12 M ANAST ANAT FJT GILT MAGST MHT NZST PETST PETT TVT WFT
+    13 FJST NZDT
+    11.5 NFT
+    10.5 ACDT LHST
+    9.5 ACST
+    6.5 CCT MMT
+    5.75 NPT
+    5.5 SLT
+    4.5 AFT IRDT
+    3.5 IRST
+    -2.5 HAT NDT
+    -3.5 HNT NST NT
+    -4.5 HLV VET
+    -9.5 MART MIT'''
+
+    tzd = {}
+    for tz_descr in map(str.split, tz_str.split('\n')):
+        tz_offset = int(float(tz_descr[0]) * 3600)
+        for tz_code in tz_descr[1:]:
+            tzd[tz_code] = tz_offset
+##########################################################################
+
+##########################################################################
 if __name__ == "__main__":
     main()
