@@ -148,10 +148,15 @@ def main():
     for stock in c.execute("select * from stocks where tracked='True'"):
         if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
             continue
-        if (stock['lastquotestamp'] is None) or (dateutil.parser.parse(stock['lastquotestamp'])+datetime.timedelta(minutes=int(stock['interval'])) <datetime.datetime.utcnow().replace(tzinfo = pytz.utc)):
-            timestamp, nowquotevalue = savequote(int(stock['id']),conn)
-            c2 = conn.cursor()
-            c2.execute("UPDATE stocks SET lastquotestamp = ?, lastquote = ?  WHERE id = ?;",  (timestamp, float(nowquotevalue), stock['id'])) #update last quote timestamp
+        #if (stock['lastquotestamp'] is None):  or (dateutil.parser.parse(stock['lastquotestamp'])+datetime.timedelta(minutes=int(stock['interval'])) <datetime.datetime.utcnow().replace(tzinfo = pytz.utc)):
+        nowutc = datetime.datetime.utcnow().replace(tzinfo = pytz.utc)
+        lastdateplus = dateutil.parser.parse(stock['lastquotestamp']) + datetime.timedelta( minutes=int(stock['interval'] ))
+        if (stock['lastquotestamp'] is None) or (lastdateplus< nowutc):
+            timestamp, nowquotevalue = savequote(int(stock['id']), stock['lastquotestamp'], conn)
+
+            if not(timestamp is None):
+                c2 = conn.cursor()
+                c2.execute("UPDATE stocks SET lastquotestamp = ?, lastquote = ?  WHERE id = ?;",  (timestamp, float(nowquotevalue), stock['id'])) #update last quote timestamp
 
     conn.commit()
 ##########################################################################
@@ -556,7 +561,7 @@ def getstockreturn(stockid, conn):
 ##########################################################################
 
 ##########################################################################
-def savequote(stockid, conn):
+def savequote(stockid, lastquotestamp, conn):
     c = conn.cursor()
 
     c.execute("select symbolgoogle, symbolyahoo, type from stocks where id=:id", {'id':int(stockid)})
@@ -580,17 +585,21 @@ def savequote(stockid, conn):
     elif row['type'].upper() == 'CURRENCY':
         symbol = str(row['symbolyahoo'])
         value = float(get_price(symbol)) #get quote
-        date = datetime.datetime.utcnow() #.replace(tzinfo = pytz.utc)
-        timestamp = date.isoformat()+'Z'
+        date = datetime.datetime.utcnow().replace(tzinfo = pytz.utc)
+        timestamp = date.isoformat() #+'Z'
 
-    c.execute("""
-            insert into quotes(stockid,timestamp,value)
-            values(?,?,?)
-            """, (int(stockid), timestamp, float(value)))
+    if (lastquotestamp is None) or (dateutil.parser.parse(lastquotestamp, tzinfos=tzd) != date):
+        #Date changed since last quote => save to database
+        c.execute("""
+                insert into quotes(stockid,timestamp,value)
+                values(?,?,?)
+                """, (int(stockid), timestamp, float(value)))
 
-    conn.commit()
+        conn.commit()
 
-    return timestamp, float(value)
+        return timestamp, float(value)
+    else:
+        return None, None
 ##########################################################################
 
 ##########################################################################
