@@ -4,7 +4,7 @@ __author__ = 'fernandolourenco'
 import version
 
 from googlefinance import getQuotes
-from ystockquote import get_historical_prices
+from ystockquote import get_historical_prices, get_price
 import operator
 
 import sqlite3
@@ -29,6 +29,7 @@ COMISSION = 6.95* 1.04
 VERBOSE = False
 
 SETTINGSFILE = 'stocks.ini'
+HOLIDAYSERVICE = "http://kayaposoft.com/enrico/json/v1.0/?action=getPublicHolidaysForYear&year=%d&country=%s"
 ##########################################################################
 
 #Globals
@@ -62,13 +63,15 @@ def main():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
 
-    print getstockreturn(9,conn)
+    #sellstock('NASDAQ:QLIK', 10, 30,None,conn)
 
     c = conn.cursor()
+
+    #Check if it is time to buy or sell in active strategies
     for stock in c.execute("""
                 select strategies.*, stocks.name, stocks.symbolgoogle, stocks.symbolyahoo, stocks.exchangeid, stocks.lastquotestamp
                 from strategies, stocks
-                where strategies.stockid=stocks.id and active='True';
+                where strategies.stockid=stocks.id and strategies.active='True';
                 """):
         #Check if market open
         if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
@@ -101,6 +104,7 @@ def main():
         #Get current quote
         quote = getQuotes(symbol)[0]
         datetradenow = dateutil.parser.parse(quote["LastTradeDateTimeLong"]) #get current last trade time on market
+        #ToDo convert timezones like EST to correct offset
         nowquotevalue = float(quote['LastTradePrice']) #get last quote
 
         newdayalert = False
@@ -123,7 +127,7 @@ def main():
             checkifdividendday(datetradenow.date() ,conn)
 
             c2 = conn.cursor()
-            c2.execute("UPDATE stocks SET lastquotestamp = ?, lastquote = ?  WHERE id = ?;",  (datetradenow, nowquotevalue, stock['stockid'])) #update last quote timestamp
+            c2.execute("UPDATE stocks SET lastquotestamp = ?, lastquote = ?  WHERE id = ?;",  (datetradenow.isoformat(), nowquotevalue, stock['stockid'])) #update last quote timestamp
             conn.commit()
 
         if qty>0 and nowquotevalue>=(1+minreturn)*buyprice and newdayalert:
@@ -132,6 +136,16 @@ def main():
             if VERBOSE:
                 print "Time to SELL %s (%s) Qty = %8.2f Price = %8.3f" % (stock['name'], symbol, qty, nowquotevalue)
 
+    #Update quotes in tracked stocks
+    for stock in c.execute("select * from stocks where tracked='True'"):
+        if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
+            continue
+        if (stock['lastquotestamp'] is None) or (dateutil.parser.parse(stock['lastquotestamp'])+datetime.timedelta(minutes=int(stock['interval'])) <datetime.datetime.utcnow().replace(tzinfo = pytz.utc)):
+            timestamp, nowquotevalue = savequote(int(stock['id']),conn)
+            c2 = conn.cursor()
+            c2.execute("UPDATE stocks SET lastquotestamp = ?, lastquote = ?  WHERE id = ?;",  (timestamp, float(nowquotevalue), stock['id'])) #update last quote timestamp
+
+    conn.commit()
 ##########################################################################
 
 ##########################################################################
@@ -186,12 +200,39 @@ def buystock(symbol, qty, price, date, conn):
     if qty<=0:
         return
 
-    if date is None:
-        now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
-    else:
-        now = date
+    symbol = symbol.upper()
 
     c = conn.cursor()
+    #get stock id
+    c.execute("select id from stocks where symbolgoogle=:id", {"id":symbol})
+    row = c.fetchone()
+    stockid = row['id']
+
+    if date is None:
+        now = datetime.datetime.utcnow().isoformat()+'Z' #.replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+
+        #save currency exchange ratio
+        cross, crossid = getexchangesymbol(stockid,conn)
+        if cross <>'':
+            er = get_price(cross)
+            c.execute("""
+                  insert into quotes(stockid,timestamp,value)
+                  values (?, ?, ?)
+                  """, (crossid,now, er))
+
+    else:
+        now = dateutil.parser.parse(date) #.replace(tzinfo = pytz.utc)
+        now = now.isoformat()
+
+        #ToDo get historical exchange ratio
+
+    #update quotes
+    c.execute("""
+      insert into quotes(stockid,timestamp,value)
+      select stocks.id, ?, ?
+      from stocks
+      where stocks.symbolgoogle=?;
+      """, (now, price, symbol))
 
     #update movements
     c.execute("""
@@ -215,12 +256,6 @@ def buystock(symbol, qty, price, date, conn):
 
     #stock is not yet in portfolio
     if portfolioid is None:
-        #get stock id
-        c1 = conn.cursor()
-        c1.execute("select id from stocks where symbolgoogle=:id", {"id":symbol})
-        row = c1.fetchone()
-        stockid = row['id']
-
         #create new record in portfolio
         c.execute("""
         insert into portfolio(stockid,qty,cost)
@@ -245,12 +280,38 @@ def sellstock(symbol, qty, price, date, conn):
     if qty<=0:
         return success
 
-    if date is None:
-        now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
-    else:
-        now = date
+    symbol = symbol.upper()
 
     c = conn.cursor()
+    #get stock id
+    c.execute("select id from stocks where symbolgoogle=:id", {"id":symbol})
+    row = c.fetchone()
+    stockid = row['id']
+
+    if date is None:
+        now = datetime.datetime.utcnow().isoformat()+'Z' #.replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
+
+        #save currency exchange ratio
+        cross, crossid = getexchangesymbol(stockid,conn)
+        if cross <>'':
+            er = get_price(cross)
+            c.execute("""
+                  insert into quotes(stockid,timestamp,value)
+                  values (?, ?, ?)
+                  """, (crossid,now, er))
+    else:
+        now = dateutil.parser.parse(date) #.replace(tzinfo = pytz.utc)
+        now = now.isoformat()
+
+        #ToDo get historical exchange ratio
+
+    #update quotes
+    c.execute("""
+      insert into quotes(stockid,timestamp,value)
+      select stocks.id, ?, ?
+      from stocks
+      where stocks.symbolgoogle=?;
+      """, (now, price, symbol))
 
     #update portfolio
     c.execute("""
@@ -331,7 +392,7 @@ def checkifmarketopen(exchangeid, stocksymbol, stockname, conn):
     if getholliday is None: # date is not yet in database for this country
         #check online to see if this date is holliday
         try:
-            r = requests.get("http://kayaposoft.com/enrico/json/v1.0/?action=getPublicHolidaysForYear&year=%d&country=%s" % (year, country))
+            r = requests.get(HOLIDAYSERVICE % (year, country))
             for date in r.json():
                 holliday = datetime.date(date['date']['year'], date['date']['month'], date['date']['day'])
                 if datetime.datetime.today() == holliday:
@@ -429,6 +490,28 @@ def getexchangerate(stockid, date, conn):
 ##########################################################################
 
 ##########################################################################
+def getexchangesymbol(stockid, conn):
+    c = conn.cursor()
+    c.execute("""
+                select currencies.shortname
+                from stocks, currencies
+                where currencies.id=stocks.currencyid and stocks.id=:id
+                """, {'id':stockid})
+    stockcurrency = str(c.fetchone()['shortname'])
+    c.execute("select value from options where name='Base Currency'")
+    basecurrency = str(c.fetchone()['value'])
+
+    if basecurrency == stockcurrency:
+        return '', ''
+    else:
+        cross = basecurrency+stockcurrency+'=X'
+        c = conn.cursor()
+        c.execute("select id from stocks where symbolyahoo=:cross", {'cross':cross})
+        crossid = int(c.fetchone()['id'])
+        return cross, crossid
+##########################################################################
+
+##########################################################################
 def getstockreturn(stockid, conn):
     comission, taxondividends = getmarketoptions(stockid, conn)
 
@@ -463,6 +546,40 @@ def getstockreturn(stockid, conn):
 
     return ireturn
 ##########################################################################
+
+##########################################################################
+def savequote(stockid, conn):
+    c = conn.cursor()
+
+    c.execute("select symbolgoogle, symbolyahoo, type from stocks where id=:id", {'id':int(stockid)})
+
+    row = c.fetchone()
+    if row['type'].upper() == 'STOCK':
+        symbol = str(row['symbolgoogle'])
+        quote = getQuotes(symbol) #get quote
+        value = quote[0]["LastTradePrice"]
+        date = dateutil.parser.parse(quote[0]["LastTradeDateTimeLong"]) #.replace(tzinfo = pytz.utc)
+        timestamp = date.isoformat()
+        if date.tzinfo is None:
+            #ToDo convert timezones like EST to correct offset
+            timestamp += 'Z'
+
+    elif row['type'].upper() == 'CURRENCY':
+        symbol = str(row['symbolyahoo'])
+        value = float(get_price(symbol)) #get quote
+        date = datetime.datetime.utcnow() #.replace(tzinfo = pytz.utc)
+        timestamp = date.isoformat()+'Z'
+
+    c.execute("""
+            insert into quotes(stockid,timestamp,value)
+            values(?,?,?)
+            """, (int(stockid), timestamp, float(value)))
+
+    conn.commit()
+
+    return timestamp, float(value)
+##########################################################################
+
 
 if __name__ == "__main__":
     main()
