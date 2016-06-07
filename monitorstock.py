@@ -20,6 +20,8 @@ import codecs
 import sys
 import os
 
+import requests
+
 #Constants
 ##########################################################################
 CASH = 10000
