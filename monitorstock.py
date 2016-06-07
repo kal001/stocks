@@ -148,7 +148,7 @@ def main():
     for stock in c.execute("select * from stocks where tracked='True'"):
         if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
             continue
-        #if (stock['lastquotestamp'] is None):  or (dateutil.parser.parse(stock['lastquotestamp'])+datetime.timedelta(minutes=int(stock['interval'])) <datetime.datetime.utcnow().replace(tzinfo = pytz.utc)):
+
         nowutc = datetime.datetime.utcnow().replace(tzinfo = pytz.utc)
         lastdateplus = dateutil.parser.parse(stock['lastquotestamp']) + datetime.timedelta( minutes=int(stock['interval'] ))
         if (stock['lastquotestamp'] is None) or (lastdateplus< nowutc):
@@ -431,10 +431,11 @@ def checkifmarketopen(exchangeid, stocksymbol, stockname, conn):
     now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
     openhour = exchange["openhour"]
     closehour = exchange["closehour"]
+    timezone = exchange['timezone']
 
     if not(openhour is None) and not(closehour is None):
-        openhour = dateutil.parser.parse(openhour)
-        closehour = dateutil.parser.parse(closehour)
+        openhour = pytz.timezone(timezone).localize(dateutil.parser.parse(openhour))
+        closehour = pytz.timezone(timezone).localize(dateutil.parser.parse(closehour))
 
         if (now<openhour) or (now>closehour): #if stockmarket closed, pass
             if VERBOSE:
@@ -586,7 +587,7 @@ def savequote(stockid, lastquotestamp, conn):
         symbol = str(row['symbolyahoo'])
         value = float(get_price(symbol)) #get quote
         date = datetime.datetime.utcnow().replace(tzinfo = pytz.utc)
-        timestamp = date.isoformat() #+'Z'
+        timestamp = date.isoformat()
 
     if (lastquotestamp is None) or (dateutil.parser.parse(lastquotestamp, tzinfos=tzd) != date):
         #Date changed since last quote => save to database

@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-python stock_telegrambot.py &
+python /home/fernando/bolsa/stock_telegrambot.py &
