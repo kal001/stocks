@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-python /home/fernando/bolsa/stock_telegrambot.py &
+cd /home/fernando/bolsa
+python stock_telegrambot.py &
