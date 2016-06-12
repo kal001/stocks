@@ -33,7 +33,7 @@ COMISSION = 14.95* 1.04
 parser = SafeConfigParser()
 
 # Open the file with the correct encoding
-with codecs.open(SETTINGSFILE, 'r', encoding='utf-8') as f:
+with codecs.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), SETTINGSFILE), 'r', encoding='utf-8') as f:
     parser.readfp(f)
 
 global DATABASE

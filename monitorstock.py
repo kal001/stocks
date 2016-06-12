@@ -51,7 +51,7 @@ def main():
     parser = SafeConfigParser()
 
     # Open the file with the correct encoding
-    with codecs.open(SETTINGSFILE, 'r', encoding='utf-8') as f:
+    with codecs.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), SETTINGSFILE), 'r', encoding='utf-8') as f:
         parser.readfp(f)
 
     DATABASE = parser.get('Database', 'File')
@@ -155,10 +155,6 @@ def main():
         lastdateplus = dateutil.parser.parse(stock['lastquotestamp']) + datetime.timedelta( minutes=int(stock['interval'] ))
         if (stock['lastquotestamp'] is None) or (lastdateplus< nowutc):
             timestamp, nowquotevalue = savequote(int(stock['id']), stock['lastquotestamp'], conn)
-
-            if not(timestamp is None):
-                c2 = conn.cursor()
-                c2.execute("UPDATE stocks SET lastquotestamp = ?, lastquote = ?  WHERE id = ?;",  (timestamp, float(nowquotevalue), stock['id'])) #update last quote timestamp
 
     conn.commit()
 ##########################################################################
@@ -410,7 +406,7 @@ def checkifmarketopen(exchangeid, stocksymbol, stockname, conn):
             r = requests.get(HOLIDAYSERVICE % (year, country))
             for date in r.json():
                 holliday = datetime.date(date['date']['year'], date['date']['month'], date['date']['day'])
-                if datetime.datetime.today() == holliday:
+                if datetoday == holliday.strftime("%Y-%m-%d"):
                     isholliday = True
                     break
         except:
@@ -597,6 +593,14 @@ def savequote(stockid, lastquotestamp, conn):
                 insert into quotes(stockid,timestamp,value)
                 values(?,?,?)
                 """, (int(stockid), timestamp, float(value)))
+
+        if not(timestamp is None):
+            c = conn.cursor()
+            c.execute("""
+                UPDATE stocks
+                SET lastquotestamp = ?, lastquote = ?
+                WHERE id = ?;
+                """,  (timestamp, float(value), int(stockid))) #update last quote timestamp
 
         conn.commit()
 

@@ -11,7 +11,7 @@ import datetime
 import dateutil.parser
 import pytz
 
-import requests
+import os
 
 import codecs
 from ConfigParser import SafeConfigParser
@@ -21,7 +21,7 @@ import monitorstock
 #Constants
 ##########################################################################
 SETTINGSFILE = 'stocks.ini'
-VERBOSE = False
+VERBOSE = True
 ##########################################################################
 
 #Globals
@@ -35,7 +35,7 @@ def main():
     parser = SafeConfigParser()
 
     # Open the file with the correct encoding
-    with codecs.open(SETTINGSFILE, 'r', encoding='utf-8') as f:
+    with codecs.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), SETTINGSFILE), 'r', encoding='utf-8') as f:
         parser.readfp(f)
 
     global DATABASE
@@ -45,12 +45,25 @@ def main():
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
+    #get quotes for all stocks marked to track
     for row in c.execute("select * from stocks where tracked='True';"):
 
         stockid = row["id"]
         stockname = row["name"]
 
+        if VERBOSE:
+            print "\n"
+
         if not(monitorstock.checkifmarketopen(row["exchangeid"], row["symbolgoogle"], stockname,conn)):
+            if VERBOSE:
+                print "Stock market CLOSED for %s(%s)"  % (row["symbolgoogle"],stockname)
+
+                c1 = conn.cursor()
+                c1.execute("select MAX(timestamp), value from quotes where stockid=:id", {'id':row['id']})
+                newquote = c1.fetchone()
+                quote = newquote['value']
+                newtimestamp = newquote['MAX(timestamp)']
+                print "LAST quote available in database for %s(%s) of %s @%s" % (row["symbolgoogle"],stockname,quote,newtimestamp)
             continue
 
         if not(row["lastquotestamp"] is None):
@@ -58,27 +71,23 @@ def main():
         else:
             timestamp = None
         interval = row["interval"]
-        type= row["type"].upper()
 
         now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc) # get current date and time in UTC with  timezone info
         if (timestamp is None) or (now> timestamp + datetime.timedelta(minutes=interval) ): #see if it is time to get a new quote
-            if type == "CURRENCY":
-                symbol = str(row["symbolyahoo"])
-                quote = ystockquote.get_price(symbol) #get quote
-            elif type == "STOCK":
-                symbol = str(row["symbolgoogle"])
-                quote = getQuotes(symbol)[0]["LastTradePrice"]  #get quote
-
-            newtimestamp=datetime.datetime.utcnow().isoformat()+'Z' # all dates saved in UTC iso format
-            c1 = conn.cursor()
-            c1.execute("UPDATE stocks SET lastquotestamp = ? WHERE ID = ?;",  (newtimestamp, stockid)) #update last quote timestamp
-            c1.execute("INSERT INTO quotes(stockid,timestamp,value) VALUES (?,?,?);", (stockid,newtimestamp,quote)) #create new quote
-            conn.commit()
+            newtimestamp, quote = monitorstock.savequote(int(stockid), timestamp, conn)
 
             if VERBOSE:
-                print "Got new stock quote for %s(%s) of %s @%s" % (symbol,stockname,quote,newtimestamp)
-##########################################################################
+                print "Got NEW quote for %s(%s) of %s @%s" % (row["symbolgoogle"],stockname,quote,newtimestamp)
+        else:
+            if VERBOSE:
+                c1 = conn.cursor()
+                c1.execute("select MAX(timestamp), value from quotes where stockid=:id", {'id':row['id']})
+                newquote = c1.fetchone()
+                quote = newquote['value']
+                newtimestamp = newquote['MAX(timestamp)']
+                print "RECENT quote available in database for %s(%s) of %s @%s" % (row["symbolgoogle"],stockname,quote,newtimestamp)
 
+##########################################################################
 
 
 if __name__ == "__main__":
