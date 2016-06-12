@@ -1,0 +1,462 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 5.0.5.2 (MacOSX)"/>
+	<meta name="author" content="Fernando José Gomes Mota Lourenço"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changedby" content="Fernando José Gomes Mota Lourenço"/>
+	<meta name="changed" content="2016-06-12T20:06:10.409034000"/>
+	<meta name="created" content="2016-06-12T19:28:58.210371000">
+	<meta name="changedby" content="Fernando José Gomes Mota Lourenço">
+	<meta name="changed" content="2016-06-12T19:40:57.289558000">
+	<style type="text/css">
+		@page { margin: 2cm }
+		p { margin-bottom: 0.25cm; line-height: 120% }
+		pre.cjk { font-family: "Courier New", monospace }
+		a.cjk:link { so-language: zxx }
+		a.ctl:link { so-language: zxx }
+	</style>
+</head>
+<body lang="en-US" dir="ltr">
+<ul>
+	<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>stocks</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-style: normal; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Table that lists stocks.</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b> INTEGER PRIMARY KEY NOT NULL UNIQUE</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal; text-align: left"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Column with an id for each stock</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>name</b> TEXT</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">common name of the stock</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>symbolgoogle</b> TEXT NOT NULL UNIQUE</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Google finance symbol for this stock</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>symbolyahoo</b> TEXT NOT NULL UNIQUE</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Yahoo finance symbol for this stock</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>exchangeid</b> INTEGER NOT NULL</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">id of the exchange where this stock is traded. This id is a reference to the exchanges table.</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>tracked</b> BOOLEAN NOT NULL DEFAULT False</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Whether or not to acquire periodical quotes of this stock</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>interval</b> INTEGER DEFAULT 5</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Interval in minutes between quotes acquisition, if “tracked”</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>lastquote</b> REAL</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Last quote for this stock</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>lastquotestamp</b> DATETIME</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Time and date of the last quote for this stock</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>currencyid</b> INTEGER REFERENCES currencies (id), type TEXT</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Currency in which this stock is traded. It is a reference for the currencies table</font></font></font></pre>
+<ul>
+	<li value="1"/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>strategies</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-style: normal; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Table that hold several strategies, per stock, to decide when to sell or to buy</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER PRIMARY KEY NOT NULL UNIQUE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal; text-align: left"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Column with an id for each </span></font></font></font>strategy</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>stockid</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER REFERENCES stocks (id)</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Reference of the stock that is the target of this strategy</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>active</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">BOOLEAN</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Whether this strategy is active</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>lowcount</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Maximum continuous number of days of stock down, before deciding to buy</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>minreturn</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">REAL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Minimum required return (in %) before deciding to sell</span></font></font></font></pre>
+<ul>
+	<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>portfolio</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-style: normal; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Table that holds our current portfolio of stocks</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER PRIMARY KEY UNIQUE NOT NULL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal; text-align: left"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Column with an id for each </span></font></font></font>element of the portfolio</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>stockid</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER REFERENCES stocks (id) NOT NULL UNIQUE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal; text-align: left"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Column </span></font></font></font>that references the stock of this element of the portfolio</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>qty</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">REAL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Quantity on hond of this stock</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>cost</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">REAL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Unit cost for each unit of this stock</span></font></font></font></pre>
+<ul>
+	<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>movements</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><u>Table with movements on the fortfolio</u></i></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER PRIMARY KEY UNIQUE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Column with an id for each movement</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>stockid</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER REFERENCES stocks (id) NOT NULL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Column that references the stock</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>date</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">DATETIME</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Date and time of the movement</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>qty</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">REAL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Quantity involved in the movement</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>value</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">REAL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Value of the movement per unit of the stock</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">&quot;</span></font></font></font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>action</b></font></font></font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">&quot; STRING</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Action of the movement. Can be “buy”, “sel” or “dividend”</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>options</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">STRING</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">To use in the future to list options ofr the movement. For example value of commissions.</span></font></font></font></pre>
+<ul>
+	<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>currencies</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-style: normal; font-weight: normal; text-decoration: none"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Table that holds currencies that the database understands</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b></font></font></font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal"> INTEGER PRIMARY KEY NOT NULL UNIQUE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Column with reference of this currency</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>symbol</b> TEXT NOT NULL UNIQUE</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Symbol normally used for this currency. Example: $, €, R$, ...</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>shortname</b> TEXT</font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Three letter code for this currency</font></font></font></pre>
+<ul>
+	<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>exchanges</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-style: normal; font-weight: normal; text-decoration: none"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Table that holds stock exchanges, where stocks are listed</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER PRIMARY KEY NOT NULL UNIQUE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Column with the reference of this stock exchange</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>name</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TEXT</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Common name of the exchange</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>countrycode</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TEXT</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Three letter country code where the exchange is situated</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>shortnamegoogle</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TEXT</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Google Finance code of this exchange</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>shortnameyahoo</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TEXT</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Yahoo Finance code of this exchange</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>openhour</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TIME</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Open time for the exchange. In local time, and in the format hh:mm:ss</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>closehour</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TIME</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Close time for the exchange. In local time, and in the format hh:mm:ss</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>workingdays</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TEXT</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span lang="en-US"><span style="font-weight: normal">Comma separeted list of the week working days for the exchange. 0 for monday. Example: </span></span></font></font></font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">0,1,2,3,4</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>comission</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">REAL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Value of commission applied on each sell or buy in this exchange</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>taxondividends</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">REAL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Value of income tax rate applied on each dividend received. For example 0.26</span></font></font></font></pre>
+<ul>
+	<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>dividends</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-style: normal; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Table that hold a list of historical dividends on each stock</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER PRIMARY KEY NOT NULL UNIQUE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Column that holds reference of this dividend</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>stockid</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER REFERENCES stocks (id)</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Stock id reference of the stock dividend</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>date</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">DATE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Ex-dividend date for this dividend</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>value</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">DOUBLE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Value of the dividend per share</span></font></font></font></pre>
+<ul>
+	<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>options</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-style: normal; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Table to list several options for the database</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER PRIMARY KEY NOT NULL UNIQUE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Reference of this option</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>name</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TEXT</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Name of the option</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>value</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TEXT</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Value of the option</span></font></font></font></pre>
+<ul>
+	<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>quotes</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-style: normal; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Table that holds hostorichal quotes for each stock</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER PRIMARY KEY NOT NULL UNIQUE</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Reference of this quote</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>stockid</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER NOT NULL REFERENCES currencies (id)</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Stock id reference for the quote</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>timestamp</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">DATETIME NOT NULL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Date and time format of the quote (in ISO 8601 format with time zone offset from UTC)</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>value</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">FLOAT NOT NULL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Value of the quote</span></font></font></font></pre>
+<ul>
+	<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><i><b>hollidays</b></i></font></font></font></pre>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff; font-style: normal; font-weight: normal"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt">Table that holds if a date is a holiday in a particular country/zone</font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>id</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">INTEGER PRIMARY KEY UNIQUE NOT NULL</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Reference column for this entry in the table</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>country</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TEXT</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Country code (three letter)</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>zone</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">TEXT</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Region (not used for the moment)</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>date</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">DATETIME</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Date (in the format yyyy-mm-dd)</span></font></font></font></pre>
+<ul>
+	<ul>
+		<li/>
+<pre class="western" style="margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><b>holliday</b></font></font></font><font color="#000000"> </font><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">BOOLEAN</span></font></font></font></pre>
+	</ul>
+</ul>
+<pre class="western" style="margin-left: 2cm; margin-bottom: 0.5cm; background: #ffffff"><font color="#000000"><font face="Verdana, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-weight: normal">Whether it is a holiday or not</span></font></font></font></pre><p style="margin-bottom: 0cm; line-height: 100%">
+<br/>
+
+</p>
+</body>
+</html>
