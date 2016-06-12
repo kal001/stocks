@@ -8,7 +8,7 @@ The scripts will save to an sqlite database the quotes of the stocks that you in
 
 Messages are **sent with Telegram**, when it is time to buy or sell a particular stock, based on a given invesment strategy.
 
-######Version 0.0.2-14 
+######Version 0.0.3
 
 2016-06-12
 Bugs correction
