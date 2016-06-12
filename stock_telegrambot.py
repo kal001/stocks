@@ -4,6 +4,7 @@ import version
 
 import datetime
 import time
+import dateutil.parser
 
 import telepot
 import codecs
@@ -146,9 +147,25 @@ def handle(msg):
             ireturn = monitorstock.getstockreturn(row['stockid'], conn)
 
             bot.sendMessage(uid, text=u"%.2f\t%s\t%.1f" % (float(row['qty']), row['name'], ireturn))
+    elif commands[0] == '/MOVEMENTS':
+        c = conn.cursor()
+        try:
+            bot.sendMessage(uid, text=u"DATE\tQTY\tVALUE\tTYPE")
+            stock = commands[1].upper()
+            query = "select movements.*, stocks.symbolgoogle from movements, stocks where movements.stockid=stocks.id and stocks.symbolgoogle='%s'" % stock
+        except:
+            bot.sendMessage(uid, text=u"DATE\tSTOCK\tQTY\tVALUE\tTYPE")
+            stock = None
+            query = "select movements.*, stocks.symbolgoogle from movements, stocks where movements.stockid=stocks.id"
 
+        for row in c.execute(query):
+            stockdate = dateutil.parser.parse(row['date'])
+            if stock is None:
+                bot.sendMessage(uid, text=u"%s\t%s\t%.3f\t%.3f\t%s" % (stockdate.date(), row['symbolgoogle'].upper(), row['qty'], row['value'], row['action'].upper()))
+            else:
+                bot.sendMessage(uid, text=u"%s\t%.3f\t%.3f\t%s" % (stockdate.date(), row['qty'], row['value'], row['action'].upper()))
     elif commands[0] == '/HELP':
-        bot.sendMessage(uid, text=u"Available commands for %s:\n /buy, /sell, /dividend, /status, /portfolio, /returns" % os.path.basename(sys.argv[0]))
+        bot.sendMessage(uid, text=u"Available commands for %s:\n /buy, /sell, /dividend, /status, /portfolio, /returns, /movements" % os.path.basename(sys.argv[0]))
     else:
         bot.sendMessage(uid, text=u"Unknown command" )
 ##########################################################################
