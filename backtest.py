@@ -15,6 +15,8 @@ import datetime
 import sys
 import os
 
+#ToDo create option in command line to select stock to test
+
 #Constants
 ##########################################################################
 SETTINGSFILE = 'stocks.ini'

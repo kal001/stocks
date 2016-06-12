@@ -2,9 +2,6 @@
 __author__ = 'fernandolourenco'
 import version
 
-from googlefinance import getQuotes
-import ystockquote
-
 import sqlite3
 
 import datetime
@@ -12,6 +9,7 @@ import dateutil.parser
 import pytz
 
 import os
+import sys
 
 import codecs
 from ConfigParser import SafeConfigParser
@@ -40,6 +38,9 @@ def main():
 
     global DATABASE
     DATABASE = parser.get('Database', 'File')
+
+    if VERBOSE:
+        print "Start %s\n%s\n%s" % (os.path.basename(sys.argv[0]), version.__version__, datetime.datetime.now())
 
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
