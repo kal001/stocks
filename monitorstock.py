@@ -78,6 +78,7 @@ def main():
                 from strategies, stocks
                 where strategies.stockid=stocks.id and strategies.active='True';
                 """):
+
         #Check if market open
         if not(checkifmarketopen(stock["exchangeid"], stock['symbolgoogle'], stock['name'],conn)):
             continue
