@@ -41,10 +41,10 @@ global DATABASE
 DATABASE = parser.get('Database', 'File')
 
 
-cloptions = argparse.ArgumentParser(description='Backtest Vs. %s' % version.__version__, prog='Backtest %s' % version.__version__)
+cloptions = argparse.ArgumentParser(description='Backtest vs. %s' % version.__version__, prog='Backtest %s' % version.__version__)
 cloptions.add_argument('-s', '--stock', help='Yahoo finance symbol of stock to backtest', nargs = 1, default = ['QLIK'],required=True)
-cloptions.add_argument('-t', '--sdate', help='Start date to backtest', nargs = 1, default = ['2012-01-01'],required=False)
-cloptions.add_argument('-f', '--fdate', help='Finish date to backtest', nargs = 1,required=False)
+cloptions.add_argument('-t', '--sdate', help='Start date to backtest (format yyyy-mm-dd)', nargs = 1, default = ['2012-01-01'],required=False)
+cloptions.add_argument('-f', '--fdate', help='Finish date to backtest (format yyyy-mm-dd)', nargs = 1,required=False)
 
 cloptions.add_argument('-v', '--version', action='version', version='%(prog)s')
 
