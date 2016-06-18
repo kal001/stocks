@@ -9,13 +9,12 @@ import sqlite3
 
 import codecs
 from ConfigParser import SafeConfigParser
+import argparse
 
 import datetime
 
 import sys
 import os
-
-#ToDo create option in command line to select stock to test
 
 #Constants
 ##########################################################################
@@ -41,6 +40,31 @@ with codecs.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), SETTIN
 global DATABASE
 DATABASE = parser.get('Database', 'File')
 
+
+cloptions = argparse.ArgumentParser(description='Backtest Vs. %s' % version.__version__, prog='Backtest %s' % version.__version__)
+cloptions.add_argument('-s', '--stock', help='Yahoo finance symbol of stock to backtest', nargs = 1, default = ['QLIK'],required=True)
+cloptions.add_argument('-t', '--sdate', help='Start date to backtest', nargs = 1, default = ['2012-01-01'],required=False)
+cloptions.add_argument('-f', '--fdate', help='Finish date to backtest', nargs = 1,required=False)
+
+cloptions.add_argument('-v', '--version', action='version', version='%(prog)s')
+
+args = cloptions.parse_args()
+
+try:
+    stocksymbol = args.stock[0]
+except:
+    exit(1)
+
+try:
+    startdate = args.sdate[0]
+except:
+    startdate = "2012-01-01"
+
+try:
+    finishdate = args.fdate[0]
+except:
+    finishdate = (datetime.datetime.utcnow() + datetime.timedelta( days=-1 )).strftime("%Y-%m-%d")
+
 if VERBOSE:
     print "Start %s\n%s\n%s\n\n" % (os.path.basename(sys.argv[0]), version.__version__, datetime.datetime.now())
 
@@ -48,14 +72,19 @@ conn = sqlite3.connect(DATABASE)
 conn.row_factory = sqlite3.Row
 
 c = conn.cursor()
-c.execute("select symbolyahoo from stocks where type='stock' and symbolyahoo='QLIK';")
+c.execute("select symbolyahoo from stocks where type='stock' and symbolyahoo=:symbol;", {'symbol':stocksymbol})
 stocks = c.fetchall()
 
 for STOCK in stocks:
 
     CAPITAL = 10000
 
-    quotes = get_historical_prices(STOCK[0], "2012-01-01", "2016-05-20")
+    try:
+        quotes = get_historical_prices(STOCK[0], startdate, finishdate)
+    except:
+        print "Error geting quotes for %s from %s to %s" % (stocksymbol, startdate, finishdate)
+        exit(1)
+
     sortedquotes = sorted(quotes.items(), key=operator.itemgetter(0))
 
     # get stock id
