@@ -56,7 +56,7 @@ def main():
     try:
         stocksymbol = args.stock[0]
     except:
-        exit(1)
+        sys.exit(1)
 
     try:
         startdate = args.sdate[0]
@@ -96,7 +96,7 @@ def main():
             quotes = get_historical_prices(STOCK[0], startdate, finishdate)
         except:
             print "Error geting quotes for %s from %s to %s" % (stocksymbol, startdate, finishdate)
-            exit(1)
+            sys.exit(1)
 
         sortedquotes = sorted(quotes.items(), key=operator.itemgetter(0))
 

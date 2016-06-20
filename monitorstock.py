@@ -1,6 +1,9 @@
-#monitor stocks and alert for buy/sell
 # coding=UTF-8
-__author__ = 'fernandolourenco'
+"""
+.. module:: monitorstock
+    :synopsis: This module acquires periodic quotes
+.. moduleauthor:: Fernando Lourenco <fernando.lourenco@lourenco.eu>
+"""
 import version
 
 from googlefinance import getQuotes
@@ -24,10 +27,6 @@ import requests
 
 #Constants
 ##########################################################################
-CASH = 10000
-TAXONDIVIDENDS = 0.26
-COMISSION = 6.95* 1.04
-
 VERBOSE = False
 
 SETTINGSFILE = 'stocks.ini'
@@ -130,10 +129,9 @@ def main():
         if newdayalert:
             #Number of days descending reached, and opend low
             if checkiftimetobuy(stock['symbolyahoo'], lowcount, datetradenow, nowquotevalue):
-                qty = int((CASH-COMISSION)/nowquotevalue)
-                bot.sendMessage(uid, text=u"Time to BUY %s (%s) Qty = %8.2f Price = %8.3f" % (stock['name'], symbol, qty, nowquotevalue))
+                bot.sendMessage(uid, text=u"Time to BUY %s (%s) Price = %8.3f" % (stock['name'], symbol, nowquotevalue))
                 if VERBOSE:
-                    print "Time to BUY %s (%s) Qty = %8.2f Price = %8.3f" % (stock['name'], symbol, qty, nowquotevalue)
+                    print "Time to BUY %s (%s) Price = %8.3f" % (stock['name'], symbol, nowquotevalue)
 
             checkifdividendday(datetradenow.date() ,conn)
 
@@ -162,6 +160,16 @@ def main():
 
 ##########################################################################
 def checkifdividendday(today, conn):
+    """ Check if today is a dividend day, and add the dividend to the stocks
+    in portfolio
+
+    Args:
+        today (date): date to check
+        conn (connection): connection object to the database
+
+    Returns:
+        none
+    """
     c = conn.cursor()
     for dividend in c.execute("select * from dividends where date=:date", {'date':today}):
         c1 = conn.cursor()
@@ -177,7 +185,18 @@ def checkifdividendday(today, conn):
 
 ##########################################################################
 def checkiftimetobuy(symbol, lowcount, datetradenow, nowquotevalue):
-    #get last days of quotes
+    """ Check if it is time to suy a stock
+
+    Args:
+
+        symbol:
+        lowcount:
+        datetradenow:
+        nowquotevalue:
+    Returns:
+        none
+    """
+
     quotes = get_historical_prices(symbol, (datetradenow-datetime.timedelta(days=lowcount)).strftime("%Y-%m-%d"), (datetradenow-datetime.timedelta(days=1)).strftime("%Y-%m-%d"))
     sortedquotes = sorted(quotes.items(), key=operator.itemgetter(0))
 
@@ -545,12 +564,17 @@ def getstockreturn(stockid, conn):
         elif movement['action'].upper() == 'DIVIDEND':
             cash += movement['qty'] * movement['value'] / exchange * (1-taxondividends)
 
+    # If stock in portfolio check its current martket value
     c.execute("select symbolgoogle from stocks where id=:id", {'id':int(stockid)})
     symbol = str(c.fetchone()['symbolgoogle'])
     quote = getQuotes(symbol)[0]["LastTradePrice"]  #get quote
     c.execute("select qty from portfolio where stockid=:id", {'id':int(stockid)})
-    qty = float(c.fetchone()['qty'])
-    cash += qty * float(quote) / exchange
+
+    try:
+        qty = float(c.fetchone()['qty'])
+        cash += qty * float(quote) / exchange
+    except:
+        pass
 
     if investment!=0:
         ireturn = (cash/investment-1)*100
