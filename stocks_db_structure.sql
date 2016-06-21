@@ -36,5 +36,9 @@ CREATE TABLE quotes (id INTEGER PRIMARY KEY NOT NULL UNIQUE, stockid INTEGER NOT
 -- Table: hollidays
 CREATE TABLE hollidays (id INTEGER PRIMARY KEY UNIQUE NOT NULL, country TEXT, zone TEXT, date DATETIME, holliday BOOLEAN);
 
+-- Table: splits
+DROP TABLE IF EXISTS splits;
+CREATE TABLE splits (id INTEGER PRIMARY KEY NOT NULL UNIQUE, stockid INTEGER REFERENCES stocks (id), date DATE, value DOUBLE);
+
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;

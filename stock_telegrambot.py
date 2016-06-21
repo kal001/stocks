@@ -164,8 +164,26 @@ def handle(msg):
                 bot.sendMessage(uid, text=u"%s\t%s\t%.3f\t%.3f\t%s" % (stockdate.date(), row['symbolgoogle'].upper(), row['qty'], row['value'], row['action'].upper()))
             else:
                 bot.sendMessage(uid, text=u"%s\t%.3f\t%.3f\t%s" % (stockdate.date(), row['qty'], row['value'], row['action'].upper()))
+    elif commands[0] == '/SPLIT':
+        try:
+            stock = str(commands[1]).upper()
+            split = eval("1.0*"+commands[2])
+            splitdate = str(commands[3])
+        except:
+            bot.sendMessage(uid, text=u"Error. Correct syntax /split google_code ratio date" )
+            return
+
+        try:
+            c = conn.cursor()
+            c.execute("insert into splits(stockid,date,value) select stocks.id, ?, ? from stocks where symbolgoogle=?", (splitdate, float(split), stock))
+            conn.commit()
+            bot.sendMessage(uid, text=u"Ok. Split set for %s" % stock)
+        except:
+            print sys.exc_info()[0]
+            bot.sendMessage(uid, text=u"Error setting split for %s" % stock)
+
     elif commands[0] == '/HELP':
-        bot.sendMessage(uid, text=u"Available commands for %s:\n /buy, /sell, /dividend, /status, /portfolio, /returns, /movements" % os.path.basename(sys.argv[0]))
+        bot.sendMessage(uid, text=u"Available commands for %s:\n /buy, /sell, /dividend, /status, /portfolio, /returns, /movements, /split" % os.path.basename(sys.argv[0]))
     else:
         bot.sendMessage(uid, text=u"Unknown command" )
 ##########################################################################
