@@ -29,4 +29,7 @@ except:
 
 message = bot.getUpdates()
 
-print "User id = %s" % message[0]['message']['from']['id']
+try:
+    print u"User id = %s" % message[0]['message']['from']['id']
+except:
+    print u"Error accessing Telegram"

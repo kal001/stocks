@@ -11,10 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-.. automodule:: monitorstock
-   :members:
-   :undoc-members:
-
+   _rst/modules
 
 Indices and tables
 ==================

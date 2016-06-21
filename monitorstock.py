@@ -28,9 +28,11 @@ import requests
 #Constants
 ##########################################################################
 VERBOSE = False
-
+"""boolean: Variable to control output to stdout of messages during execution"""
 SETTINGSFILE = 'stocks.ini'
+"""string: Name of settings file"""
 HOLIDAYSERVICE = "http://kayaposoft.com/enrico/json/v1.0/?action=getPublicHolidaysForYear&year=%d&country=%s"
+"""string: Address of webservice to retreive holiday data"""
 ##########################################################################
 
 #Globals
@@ -185,16 +187,17 @@ def checkifdividendday(today, conn):
 
 ##########################################################################
 def checkiftimetobuy(symbol, lowcount, datetradenow, nowquotevalue):
-    """ Check if it is time to suy a stock
+    """ Check if it is time to suy a stock, by checking if stock closed low for
+    a consecutive lowcount number of days, and today opend low again
 
     Args:
 
-        symbol:
-        lowcount:
-        datetradenow:
-        nowquotevalue:
+        symbol (string): yahoo finance symbol to check if it is time to buy
+        lowcount (int): number of consecutive days of closing low to decide to buy
+        datetradenow (datetime): date and time object with current quote
+        nowquotevalue (float): current quote value
     Returns:
-        none
+        boolean: True if it is time to buy stock
     """
 
     quotes = get_historical_prices(symbol, (datetradenow-datetime.timedelta(days=lowcount)).strftime("%Y-%m-%d"), (datetradenow-datetime.timedelta(days=1)).strftime("%Y-%m-%d"))
