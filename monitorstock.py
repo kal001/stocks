@@ -136,6 +136,7 @@ def main():
                     print "Time to BUY %s (%s) Price = %8.3f" % (stock['name'], symbol, nowquotevalue)
 
             checkifdividendday(datetradenow.date() ,conn)
+            checkifsplitday(datetradenow.date() ,conn)
 
             c2 = conn.cursor()
             c2.execute("UPDATE stocks SET lastquotestamp = ?, lastquote = ?  WHERE id = ?;",  (datetradenow.isoformat(), nowquotevalue, stock['stockid'])) #update last quote timestamp
@@ -158,6 +159,34 @@ def main():
             timestamp, nowquotevalue = savequote(int(stock['id']), stock['lastquotestamp'], conn)
 
     conn.commit()
+##########################################################################
+
+##########################################################################
+def checkifsplitday(today, conn):
+    """ Check if today is a split stock day, and add if so update portfolio and
+    movements tables accordingly
+
+    Args:
+        today (date): date to check
+        conn (connection): connection object to the database
+
+    Returns:
+        none
+    """
+
+    c = conn.cursor()
+    for split in c.execute("select * from splits where date=:date", {'date':today}):
+        c1 = conn.cursor()
+        c1.execute("select * from portfolio where stockid=:id", {'id':split['stockid']})
+        portfolio = c1.fetchone()
+        if not(portfolio is None):
+            c2 = conn.cursor()
+            c2.execute("""
+            insert into movements(stockid,date,qty,value,action)
+            values(?,?,?,?,?)
+            """, (int(split['stockid']), today, float(portfolio['qty']), float(split['value']), 'split'))
+
+            #ToDo update portfolio table
 ##########################################################################
 
 ##########################################################################
